@@ -5,8 +5,9 @@ import { fileURLToPath } from 'url';
 import { mkdirSync } from 'fs';
 import { protect } from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
+import { validateObjectId } from '../middleware/validateObjectId.js';
 import {
-  getDashboard, getContent, getCategories,
+  getDashboard, getProfile, updateProfile, getContent, getCategories,
   createContent, updateContent, deleteContent,
   getContentById, trackView,
 } from '../controllers/instructorController.js';
@@ -26,11 +27,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 150 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['application/pdf'];
+    const allowed = [
+      'application/pdf',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+      'video/x-msvideo',
+      'video/x-matroska',
+    ];
     if (allowed.includes(file.mimetype)) return cb(null, true);
-    cb(new Error('Only PDF documents are allowed'));
+    cb(new Error('Only PDF documents and video files are allowed'));
   },
 });
 
@@ -38,12 +46,14 @@ const router = express.Router();
 router.use(protect, authorizeRoles('instructor'));
 
 router.get('/dashboard', getDashboard);
+router.get('/profile', getProfile);
+router.put('/profile', updateProfile);
 router.get('/content', getContent);
-router.get('/content/:id', getContentById);
+router.get('/content/:id', validateObjectId, getContentById);
 router.get('/categories', getCategories);
-router.post('/content', upload.single('file'), createContent);
-router.put('/content/:id', upload.single('file'), updateContent);
-router.delete('/content/:id', deleteContent);
-router.post('/content/:id/view', trackView);
+router.post('/content', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]), createContent);
+router.put('/content/:id', validateObjectId, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]), updateContent);
+router.delete('/content/:id', validateObjectId, deleteContent);
+router.post('/content/:id/view', validateObjectId, trackView);
 
 export default router;

@@ -70,6 +70,20 @@ export const getDocumentById = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await studentService.getDocumentById(req.user.userId, req.params.id) });
 });
 
+export const deleteDocument = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await studentService.deleteDocument(req.user.userId, req.params.id) });
+});
+
 export const askDocumentQuestion = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await studentService.askDocumentQuestion(req.user.userId, req.params.id, req.body.question || '') });
+});
+
+export const getInstructorLearningContent = asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: await studentService.getInstructorContent({
+      contentType: req.query.contentType,
+      category: req.query.category,
+    }),
+  });
 });

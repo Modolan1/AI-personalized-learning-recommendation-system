@@ -15,6 +15,12 @@ export const instructorContentRepository = {
       .sort({ createdAt: -1 });
   },
 
+  findPublishedByCategory: (categoryId) =>
+    InstructorContent.find({ isPublished: true, category: categoryId })
+      .populate('category', 'name')
+      .populate('instructor', 'firstName lastName role')
+      .sort({ createdAt: -1 }),
+
   findById: (id) =>
     InstructorContent.findById(id)
       .populate('category', 'name')

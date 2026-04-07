@@ -1,7 +1,25 @@
 import { instructorContentRepository } from '../repositories/instructorContentRepository.js';
 import { categoryRepository } from '../repositories/categoryRepository.js';
+import { userRepository } from '../repositories/userRepository.js';
 
 export const instructorService = {
+  getProfile: (instructorId) => userRepository.findById(instructorId),
+
+  async updateProfile(instructorId, data) {
+    const profile = await userRepository.updateById(instructorId, {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      preferredSubject: data.preferredSubject,
+      preferredLearningStyle: data.preferredLearningStyle,
+      learningGoal: data.learningGoal,
+      skillLevel: data.skillLevel,
+      weeklyLearningGoalHours: data.weeklyLearningGoalHours,
+    });
+    if (!profile) throw new Error('Instructor not found');
+    return profile;
+  },
+
   async getDashboard(instructorId) {
     const content = await instructorContentRepository.findByInstructor(instructorId);
     const videos = content.filter((c) => c.contentType === 'video');
@@ -28,18 +46,22 @@ export const instructorService = {
   },
 
   async createContent(instructorId, data, file) {
+    const documentFile = Array.isArray(file?.file) ? file.file[0] : file;
+    const videoFile = Array.isArray(file?.videoFile) ? file.videoFile[0] : null;
+
     if (!data.title || !data.contentType) {
       throw new Error('Title and content type are required');
     }
 
     if (data.contentType === 'video') {
-      if (!data.videoUrl) throw new Error('Video URL is required');
+      const videoSource = videoFile ? `/uploads/instructor-docs/${videoFile.filename}` : (data.videoUrl || '').trim();
+      if (!videoSource) throw new Error('Video URL or uploaded video file is required');
       return instructorContentRepository.create({
         instructor: instructorId,
         title: data.title,
         description: data.description || '',
         contentType: 'video',
-        videoUrl: data.videoUrl,
+        videoUrl: videoSource,
         category: data.category || null,
         tags: data.tags ? data.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
         isPublished: data.isPublished !== 'false',
@@ -47,14 +69,14 @@ export const instructorService = {
     }
 
     if (data.contentType === 'document') {
-      if (!file) throw new Error('A document file is required');
+      if (!documentFile) throw new Error('A document file is required');
       return instructorContentRepository.create({
         instructor: instructorId,
         title: data.title,
         description: data.description || '',
         contentType: 'document',
-        fileUrl: `/uploads/instructor-docs/${file.filename}`,
-        originalFileName: file.originalname,
+        fileUrl: `/uploads/instructor-docs/${documentFile.filename}`,
+        originalFileName: documentFile.originalname,
         category: data.category || null,
         tags: data.tags ? data.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
         isPublished: data.isPublished !== 'false',
@@ -65,6 +87,9 @@ export const instructorService = {
   },
 
   async updateContent(instructorId, contentId, data, file) {
+    const documentFile = Array.isArray(file?.file) ? file.file[0] : file;
+    const videoFile = Array.isArray(file?.videoFile) ? file.videoFile[0] : null;
+
     const existing = await instructorContentRepository.findByInstructorAndId(instructorId, contentId);
     if (!existing) throw new Error('Content not found or access denied');
 
@@ -76,13 +101,17 @@ export const instructorService = {
       isPublished: data.isPublished !== undefined ? data.isPublished !== 'false' : existing.isPublished,
     };
 
-    if (existing.contentType === 'video' && data.videoUrl) {
-      updates.videoUrl = data.videoUrl;
+    if (existing.contentType === 'video') {
+      if (videoFile) {
+        updates.videoUrl = `/uploads/instructor-docs/${videoFile.filename}`;
+      } else if (data.videoUrl) {
+        updates.videoUrl = data.videoUrl;
+      }
     }
 
-    if (existing.contentType === 'document' && file) {
-      updates.fileUrl = `/uploads/instructor-docs/${file.filename}`;
-      updates.originalFileName = file.originalname;
+    if (existing.contentType === 'document' && documentFile) {
+      updates.fileUrl = `/uploads/instructor-docs/${documentFile.filename}`;
+      updates.originalFileName = documentFile.originalname;
     }
 
     return instructorContentRepository.updateById(contentId, updates);

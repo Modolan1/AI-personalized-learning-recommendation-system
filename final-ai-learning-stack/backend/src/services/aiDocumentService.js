@@ -4,8 +4,10 @@ import { env } from '../config/env.js';
 const client = env.openaiApiKey ? new OpenAI({ apiKey: env.openaiApiKey }) : null;
 const MAX_TEXT_CHARS = 15000;
 
+
 function normalizeText(input) {
   return (input || '').replace(/\s+/g, ' ').trim();
+  
 }
 
 function chunkSentences(text) {

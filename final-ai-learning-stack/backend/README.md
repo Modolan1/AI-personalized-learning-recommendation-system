@@ -12,3 +12,4 @@ npm run dev
 Demo accounts after seeding:
 - admin@example.com / password123
 - student@example.com / password123
+- instructor@example.com / password123

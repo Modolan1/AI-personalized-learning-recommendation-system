@@ -4,10 +4,13 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { adminService } from '../../services/adminService';
+import { useToast } from '../../context/ToastContext';
 
 export default function ManageCoursesPage() {
+  const toast = useToast();
   const [courses, setCourses] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     title: '', description: '', category: '', level: 'Beginner', durationHours: 1, thumbnail: '',
     modules: [{ title: '', durationMinutes: 20, type: 'reading' }],
@@ -29,18 +32,57 @@ export default function ManageCoursesPage() {
 
   const addModule = () => setForm({ ...form, modules: [...form.modules, { title: '', durationMinutes: 20, type: 'reading' }] });
 
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ title: '', description: '', category: categories[0]?._id || '', level: 'Beginner', durationHours: 1, thumbnail: '', modules: [{ title: '', durationMinutes: 20, type: 'reading' }] });
+  };
+
+  const startEdit = (course) => {
+    setEditingId(course._id);
+    setForm({
+      title: course.title,
+      description: course.description,
+      category: course.category?._id || course.category,
+      level: course.level,
+      durationHours: course.durationHours,
+      thumbnail: course.thumbnail || '',
+      modules: course.modules?.length ? course.modules.map((m) => ({ title: m.title, durationMinutes: m.durationMinutes, type: m.type })) : [{ title: '', durationMinutes: 20, type: 'reading' }],
+    });
+  };
+
   const submit = async (e) => {
     e.preventDefault();
-    await adminService.createCourse({ ...form, durationHours: Number(form.durationHours) });
-    setForm({ title: '', description: '', category: categories[0]?._id || '', level: 'Beginner', durationHours: 1, thumbnail: '', modules: [{ title: '', durationMinutes: 20, type: 'reading' }] });
-    load();
+    try {
+      if (editingId) {
+        await adminService.updateCourse(editingId, { ...form, durationHours: Number(form.durationHours) });
+        toast('Course updated successfully');
+      } else {
+        await adminService.createCourse({ ...form, durationHours: Number(form.durationHours) });
+        toast('Course created successfully');
+      }
+      resetForm();
+      load();
+    } catch (err) {
+      toast(err?.response?.data?.message || 'Failed to save course', 'error');
+    }
+  };
+
+  const removeCourse = async (id) => {
+    try {
+      await adminService.deleteCourse(id);
+      toast('Course deleted successfully');
+      if (editingId === id) resetForm();
+      load();
+    } catch (err) {
+      toast(err?.response?.data?.message || 'Failed to delete course', 'error');
+    }
   };
 
   return (
     <AdminLayout>
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
-          <h3 className="mb-4 text-lg font-semibold">Add Course</h3>
+          <h3 className="mb-4 text-lg font-semibold">{editingId ? 'Edit Course' : 'Add Course'}</h3>
           <form onSubmit={submit} className="space-y-4">
             <Input label="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             <Input label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
@@ -78,7 +120,8 @@ export default function ManageCoursesPage() {
               ))}
               <Button type="button" variant="secondary" className="w-full" onClick={addModule}>Add Module</Button>
             </div>
-            <Button className="w-full">Save Course</Button>
+            <Button className="w-full">{editingId ? 'Update Course' : 'Save Course'}</Button>
+            {editingId && <Button type="button" variant="secondary" className="w-full mt-2" onClick={resetForm}>Cancel Edit</Button>}
           </form>
         </Card>
         <div className="lg:col-span-2 space-y-4">
@@ -91,7 +134,10 @@ export default function ManageCoursesPage() {
                   <p className="mt-2 text-sm text-slate-600">{course.description}</p>
                   <div className="mt-3 text-sm text-slate-500">{course.level} • {course.durationHours} hour(s) • {course.modules?.length || 0} modules</div>
                 </div>
-                <Button variant="secondary" onClick={async () => { await adminService.deleteCourse(course._id); load(); }}>Delete</Button>
+                <div className="flex gap-2">
+                  <Button variant="secondary" onClick={() => startEdit(course)}>Edit</Button>
+                  <Button variant="danger" onClick={() => removeCourse(course._id)}>Delete</Button>
+                </div>
               </div>
             </Card>
           ))}

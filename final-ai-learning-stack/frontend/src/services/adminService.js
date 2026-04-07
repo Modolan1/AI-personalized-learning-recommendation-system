@@ -1,9 +1,17 @@
 import API from './api';
 export const adminService = {
   getDashboard: async () => (await API.get('/admin/dashboard')).data,
+  getProfile: async () => (await API.get('/admin/profile')).data,
+  updateProfile: async (payload) => (await API.put('/admin/profile', payload)).data,
   getStudents: async () => (await API.get('/admin/students')).data,
+  getAdmins: async () => (await API.get('/admin/admins')).data,
+  getStudentById: async (id) => (await API.get(`/admin/students/${id}`)).data,
+  updateStudent: async (id, payload) => (await API.put(`/admin/students/${id}`, payload)).data,
+  deleteStudent: async (id) => (await API.delete(`/admin/students/${id}`)).data,
   getCategories: async () => (await API.get('/admin/categories')).data,
   createCategory: async (payload) => (await API.post('/admin/categories', payload)).data,
+  updateCategory: async (id, payload) => (await API.put(`/admin/categories/${id}`, payload)).data,
+  deleteCategory: async (id) => (await API.delete(`/admin/categories/${id}`)).data,
   getCategoryAnalytics: async () => (await API.get('/admin/analytics/categories')).data,
   getCourses: async () => (await API.get('/admin/courses')).data,
   createCourse: async (payload) => (await API.post('/admin/courses', payload)).data,

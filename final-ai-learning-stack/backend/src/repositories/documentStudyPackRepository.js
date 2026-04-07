@@ -1,5 +1,10 @@
 import DocumentStudyPack from '../models/DocumentStudyPack.js';
 
+/** Escapes special regex characters to prevent ReDoS from user-supplied search terms */
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export const documentStudyPackRepository = {
   create: (data) => DocumentStudyPack.create(data),
 
@@ -8,10 +13,11 @@ export const documentStudyPackRepository = {
     const trimmed = (searchTerm || '').trim();
 
     if (trimmed) {
+      const safe = escapeRegex(trimmed);
       query.$or = [
-        { fileName: { $regex: trimmed, $options: 'i' } },
-        { summary: { $regex: trimmed, $options: 'i' } },
-        { keyPoints: { $elemMatch: { $regex: trimmed, $options: 'i' } } },
+        { fileName: { $regex: safe, $options: 'i' } },
+        { summary: { $regex: safe, $options: 'i' } },
+        { keyPoints: { $elemMatch: { $regex: safe, $options: 'i' } } },
       ];
     }
 
@@ -40,5 +46,9 @@ export const documentStudyPackRepository = {
 
   countByStudent(studentId) {
     return DocumentStudyPack.countDocuments({ student: studentId });
+  },
+
+  deleteByIdAndStudent(id, studentId) {
+    return DocumentStudyPack.findOneAndDelete({ _id: id, student: studentId });
   },
 };

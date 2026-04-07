@@ -33,12 +33,68 @@ export const adminService = {
   },
 
   listStudents: () => userRepository.findStudents(),
+  listAdmins: () => userRepository.findAdmins(),
+  getProfile: (adminId) => userRepository.findById(adminId),
+
+  async updateProfile(adminId, data) {
+    const profile = await userRepository.updateById(adminId, {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      preferredSubject: data.preferredSubject,
+      preferredLearningStyle: data.preferredLearningStyle,
+      learningGoal: data.learningGoal,
+      skillLevel: data.skillLevel,
+      weeklyLearningGoalHours: data.weeklyLearningGoalHours,
+    });
+    if (!profile) throw new Error('Admin not found');
+    return profile;
+  },
+
   listCategories: () => categoryRepository.findAll(),
 
   async createCategory(data) {
     const existing = await categoryRepository.findByName(data.name);
     if (existing) throw new Error('Category already exists');
     return categoryRepository.create(data);
+  },
+
+  async updateCategory(id, data) {
+    const category = await categoryRepository.updateById(id, { name: data.name, description: data.description });
+    if (!category) throw new Error('Category not found');
+    return category;
+  },
+
+  async deleteCategory(id) {
+    const category = await categoryRepository.deleteById(id);
+    if (!category) throw new Error('Category not found');
+    return category;
+  },
+
+  async getStudentById(id) {
+    const student = await userRepository.findStudentById(id);
+    if (!student) throw new Error('Student not found');
+    return student;
+  },
+
+  async updateStudent(id, data) {
+    const student = await userRepository.updateById(id, {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      skillLevel: data.skillLevel,
+      preferredSubject: data.preferredSubject,
+      preferredLearningStyle: data.preferredLearningStyle,
+      learningGoal: data.learningGoal,
+    });
+    if (!student) throw new Error('Student not found');
+    return student;
+  },
+
+  async deleteStudent(id) {
+    const student = await userRepository.deleteById(id);
+    if (!student) throw new Error('Student not found');
+    return student;
   },
 
   createCourse: (adminId, data) => courseRepository.create({

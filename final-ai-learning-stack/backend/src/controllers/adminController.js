@@ -5,10 +5,6 @@ export const getDashboard = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await adminService.getDashboard() });
 });
 
-export const getStudents = asyncHandler(async (req, res) => {
-  res.json({ success: true, data: await adminService.listStudents() });
-});
-
 export const getCategories = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await adminService.listCategories() });
 });
@@ -17,16 +13,54 @@ export const createCategory = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: await adminService.createCategory(req.body) });
 });
 
+export const updateCategory = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.updateCategory(req.params.id, req.body) });
+});
+
+export const deleteCategory = asyncHandler(async (req, res) => {
+  await adminService.deleteCategory(req.params.id);
+  res.json({ success: true, message: 'Category deleted' });
+});
+
 export const getCategoryAnalytics = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await adminService.getCategoryAnalytics() });
 });
 
-export const getCourses = asyncHandler(async (req, res) => {
-  res.json({ success: true, data: await adminService.listCourses() });
+export const getStudents = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listStudents() });
+});
+
+export const getAdmins = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listAdmins() });
+});
+
+export const getProfile = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.getProfile(req.user.userId) });
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.updateProfile(req.user.userId, req.body) });
+});
+
+export const getStudentById = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.getStudentById(req.params.id) });
+});
+
+export const updateStudent = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.updateStudent(req.params.id, req.body) });
+});
+
+export const deleteStudent = asyncHandler(async (req, res) => {
+  await adminService.deleteStudent(req.params.id);
+  res.json({ success: true, message: 'Student deleted' });
 });
 
 export const createCourse = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: await adminService.createCourse(req.user.userId, req.body) });
+});
+
+export const getCourses = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listCourses() });
 });
 
 export const updateCourse = asyncHandler(async (req, res) => {

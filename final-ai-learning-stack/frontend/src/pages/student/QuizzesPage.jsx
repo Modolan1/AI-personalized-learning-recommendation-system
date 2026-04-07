@@ -3,8 +3,10 @@ import StudentLayout from '../../layouts/StudentLayout';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { studentService } from '../../services/studentService';
+import { useToast } from '../../context/ToastContext';
 
 export default function QuizzesPage() {
+  const toast = useToast();
   const [quizzes, setQuizzes] = useState([]);
   const [selected, setSelected] = useState(null);
   const [answers, setAnswers] = useState([]);
@@ -34,7 +36,9 @@ export default function QuizzesPage() {
       correctAnswer: question.correctAnswer,
       isCorrect: answers[index] === question.correctAnswer,
     }));
-    setResult({ ...response, details });    } catch (err) {
+    setResult({ ...response, details });
+    toast(`Quiz submitted! Score: ${response.score}/${response.totalQuestions}`);
+    } catch (err) {
       console.error('Failed to submit quiz:', err);
       setError('Failed to submit quiz. Please try again.');
     }  };

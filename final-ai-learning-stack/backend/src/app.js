@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import instructorRoutes from './routes/instructorRoutes.js';
+import { sanitizeRequest } from './middleware/sanitizeMiddleware.js';
 import { notFound } from './middleware/notFoundMiddleware.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
@@ -30,6 +31,7 @@ app.use(cors({
 	credentials: true,
 }));
 app.use(express.json());
+app.use(sanitizeRequest);
 app.use(morgan('dev'));
 
 app.use('/uploads', express.static(uploadsDir));

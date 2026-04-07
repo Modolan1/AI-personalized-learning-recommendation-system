@@ -4,11 +4,13 @@ export const studentService = {
   getDocumentUploadConfig: async () => (await API.get('/student/documents/upload-config')).data,
   getDocuments: async (search = '') => (await API.get('/student/documents', { params: search ? { search } : {} })).data,
   getDocumentById: async (id) => (await API.get(`/student/documents/${id}`)).data,
+  deleteDocument: async (id) => (await API.delete(`/student/documents/${id}`)).data,
   analyzeDocument: async (formData) => (await API.post('/student/documents/analyze', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })).data,
   askDocumentQuestion: async (id, question) => (await API.post(`/student/documents/${id}/chat`, { question })).data,
   submitGeneratedDocumentQuiz: async (id, answers) => (await API.post(`/student/documents/${id}/quiz/submit`, { answers })).data,
+  getInstructorContent: async (params = {}) => (await API.get('/student/instructor-content', { params })).data,
   getProfile: async () => (await API.get('/student/profile')).data,
   updateProfile: async (payload) => (await API.put('/student/profile', payload)).data,
   getCourses: async () => (await API.get('/student/courses')).data,

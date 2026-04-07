@@ -100,6 +100,11 @@ export const studentService = {
     ]);
     if (!course) throw new Error('Course not found');
 
+    const categoryId = course.category?._id || course.category;
+    const learningContent = categoryId
+      ? await instructorContentRepository.findPublishedByCategory(categoryId)
+      : [];
+
     await activityRepository.create({
       student: studentId,
       activityType: 'course_detail_view',
@@ -112,6 +117,7 @@ export const studentService = {
       course,
       quizzes,
       flashcards,
+      learningContent,
       progress: progress || {
         completedModules: 0,
         totalModules: course.modules?.length || 0,
@@ -293,6 +299,12 @@ export const studentService = {
     const document = await documentStudyPackRepository.findByIdAndStudent(documentId, studentId);
     if (!document) throw new Error('Document study pack not found');
     return document;
+  },
+
+  async deleteDocument(studentId, documentId) {
+    const document = await documentStudyPackRepository.deleteByIdAndStudent(documentId, studentId);
+    if (!document) throw new Error('Document not found');
+    return { deleted: true };
   },
 
   async askDocumentQuestion(studentId, documentId, question) {

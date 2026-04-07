@@ -8,11 +8,56 @@ import { studentService } from '../../services/studentService';
 export default function StudentDashboardPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [instructorContent, setInstructorContent] = useState([]);
+  const [courseDocuments, setCourseDocuments] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState('all');
+  const [selectedCourseId, setSelectedCourseId] = useState('all');
+
+  const resolveAssetUrl = (url) => {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+    const origin = apiBase.replace(/\/api\/?$/, '');
+    return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   const load = async () => {
     try {
       setError(null);
-      const result = await studentService.getDashboard();
+      const [result, contentResult, coursesResult] = await Promise.all([
+        studentService.getDashboard(),
+        studentService.getInstructorContent({ contentType: 'document' }),
+        studentService.getCourses(),
+      ]);
       setData(result.data);
+
+      const courses = coursesResult.data || [];
+      setCourses(courses);
+      const categoryToCourses = courses.reduce((acc, course) => {
+        const categoryId = String(course?.category?._id || course?.category || '');
+        if (!categoryId) return acc;
+        if (!acc[categoryId]) acc[categoryId] = [];
+        acc[categoryId].push({
+          id: String(course._id),
+          title: course.title,
+        });
+        return acc;
+      }, {});
+
+      const documents = (contentResult.data || []).map((item) => {
+        const categoryId = String(item?.category?._id || item?.category || '');
+        const related = categoryToCourses[categoryId] || [];
+        return {
+          ...item,
+          relatedCourses: related.map((course) => course.title),
+          relatedCourseIds: related.map((course) => course.id),
+          categoryId,
+        };
+      });
+
+      setInstructorContent(documents);
+      setCourseDocuments(documents);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
       setError('Failed to load dashboard. Please try again.');
@@ -23,8 +68,39 @@ export default function StudentDashboardPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    if (selectedCategoryId === 'all') return;
+    const selectedCourseStillValid = courses.some((course) => String(course._id) === selectedCourseId && String(course?.category?._id || course?.category || '') === selectedCategoryId);
+    if (!selectedCourseStillValid) {
+      setSelectedCourseId('all');
+    }
+  }, [selectedCategoryId, selectedCourseId, courses]);
+
   if (error) return <StudentLayout><div className="text-red-600">{error}</div></StudentLayout>;
   if (!data) return <StudentLayout><div>Loading...</div></StudentLayout>;
+
+  const categoryOptions = courses.reduce((acc, course) => {
+    const categoryId = String(course?.category?._id || course?.category || '');
+    const categoryName = course?.category?.name || 'Uncategorized';
+    if (!categoryId) return acc;
+    if (!acc.some((item) => item.id === categoryId)) {
+      acc.push({ id: categoryId, name: categoryName });
+    }
+    return acc;
+  }, []);
+
+  const courseOptions = courses.filter((course) => {
+    if (selectedCategoryId === 'all') return true;
+    return String(course?.category?._id || course?.category || '') === selectedCategoryId;
+  });
+
+  const filteredDocuments = courseDocuments.filter((item) => {
+    const categoryMatch = selectedCategoryId === 'all' || item.categoryId === selectedCategoryId;
+    const courseMatch = selectedCourseId === 'all' || (item.relatedCourseIds || []).includes(selectedCourseId);
+    return categoryMatch && courseMatch;
+  });
+
+  const visibleDocuments = filteredDocuments.slice(0, 8);
 
   return (
     <StudentLayout>
@@ -113,6 +189,81 @@ export default function StudentDashboardPage() {
           <Link to="/student/documents" className="mt-4 inline-block rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
             Open Documents Page
           </Link>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card>
+          <h3 className="mb-4 text-lg font-semibold">Course Uploaded Documents</h3>
+          <div className="mb-4 grid gap-3 md:grid-cols-2">
+            <select
+              className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700"
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {categoryOptions.map((category) => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+
+            <select
+              className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700"
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+            >
+              <option value="all">All Courses</option>
+              {courseOptions.map((course) => (
+                <option key={course._id} value={course._id}>{course.title}</option>
+              ))}
+            </select>
+          </div>
+
+          {!visibleDocuments.length && <p className="text-sm text-slate-500">No uploaded course documents match this filter.</p>}
+          <div className="grid gap-4 md:grid-cols-2">
+            {visibleDocuments.map((item) => {
+              const documentUrl = resolveAssetUrl(item.fileUrl);
+
+              return (
+                <div key={item._id} className="rounded-xl border p-4">
+                  <div className="text-xs font-medium uppercase tracking-wide text-indigo-600">document</div>
+                  <h4 className="mt-1 font-semibold text-slate-900">{item.title}</h4>
+                  <p className="mt-2 text-sm text-slate-600">{item.description}</p>
+                  <p className="mt-2 text-xs text-slate-500">By {item.instructor?.firstName} {item.instructor?.lastName}</p>
+
+                  {!!item.relatedCourses?.length && (
+                    <p className="mt-2 text-xs text-slate-500">Related courses: {item.relatedCourses.join(', ')}</p>
+                  )}
+
+                  {documentUrl && (
+                    <div className="mt-3 flex gap-2">
+                      <a
+                        className="inline-block rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        target="_blank"
+                        rel="noreferrer"
+                        href={documentUrl}
+                      >
+                        View PDF
+                      </a>
+                      <a
+                        className="inline-block rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                        href={documentUrl}
+                        download={item.originalFileName || `${item.title}.pdf`}
+                      >
+                        Download PDF
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {filteredDocuments.length > 8 && (
+            <p className="mt-4 text-xs text-slate-500">
+              Showing latest 8 matching documents. Open Courses to view full content by course.
+            </p>
+          )}
         </Card>
       </div>
     </StudentLayout>

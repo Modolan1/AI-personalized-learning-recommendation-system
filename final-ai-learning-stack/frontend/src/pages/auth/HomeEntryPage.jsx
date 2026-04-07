@@ -196,7 +196,13 @@ export default function HomeEntryPage() {
     try {
       const user = await login(loginForm.email, loginForm.password);
       setShowLogin(false);
-      navigate(user.role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
+      navigate(
+        user.role === 'admin'
+          ? '/admin/dashboard'
+          : user.role === 'instructor'
+            ? '/instructor/dashboard'
+            : '/student/dashboard'
+      );
     } catch (error) {
       setLoginError(error?.response?.data?.message || 'Login failed');
     }
@@ -218,7 +224,13 @@ export default function HomeEntryPage() {
     try {
       const user = await register(payload);
       setShowRegister(false);
-      navigate(user.role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
+      navigate(
+        user.role === 'admin'
+          ? '/admin/dashboard'
+          : user.role === 'instructor'
+            ? '/instructor/dashboard'
+            : '/student/dashboard'
+      );
     } catch (error) {
       setRegisterError(error?.response?.data?.message || 'Registration failed');
     }
@@ -387,6 +399,18 @@ export default function HomeEntryPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Input label="First Name" value={registerForm.firstName} onChange={(event) => setRegisterForm((prev) => ({ ...prev, firstName: event.target.value }))} />
               <Input label="Last Name" value={registerForm.lastName} onChange={(event) => setRegisterForm((prev) => ({ ...prev, lastName: event.target.value }))} />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Account Role</label>
+              <select
+                className="w-full rounded-xl border border-slate-200 p-3"
+                value={registerForm.role}
+                onChange={(event) => setRegisterForm((prev) => ({ ...prev, role: event.target.value }))}
+              >
+                <option value="student">Student</option>
+                <option value="instructor">Instructor</option>
+              </select>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

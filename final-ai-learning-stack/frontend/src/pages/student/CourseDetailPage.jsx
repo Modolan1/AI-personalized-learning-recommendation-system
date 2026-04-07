@@ -5,6 +5,14 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { studentService } from '../../services/studentService';
 
+function resolveAssetUrl(url) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  const apiBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+  const origin = apiBase.replace(/\/api\/?$/, '');
+  return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 export default function CourseDetailPage() {
   const { id } = useParams();
   const [data, setData] = useState(null);
@@ -22,6 +30,7 @@ export default function CourseDetailPage() {
 
   const cards = data.flashcards || [];
   const currentCard = cards[currentIndex];
+  const contentItems = data.learningContent || [];
 
   const reviewCurrent = async () => {
     try {
@@ -71,6 +80,71 @@ export default function CourseDetailPage() {
                 </div>
               ))}
             </div>
+          </Card>
+
+          <Card>
+            <h3 className="mb-4 text-lg font-semibold">Learning Content (Videos & PDFs)</h3>
+            {contentItems.length === 0 ? (
+              <div className="text-sm text-slate-500">No uploaded learning content for this course category yet.</div>
+            ) : (
+              <div className="space-y-4">
+                {contentItems.map((item) => {
+                  const videoUrl = resolveAssetUrl(item.videoUrl);
+                  const fileUrl = resolveAssetUrl(item.fileUrl);
+                  const uploaderName = item.instructor ? `${item.instructor.firstName || ''} ${item.instructor.lastName || ''}`.trim() : 'Unknown';
+                  return (
+                    <div key={item._id} className="rounded-xl border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-medium uppercase tracking-wide text-indigo-600">{item.contentType}</div>
+                          <h4 className="mt-1 font-semibold text-slate-900">{item.title}</h4>
+                          {item.description ? <p className="mt-1 text-sm text-slate-600">{item.description}</p> : null}
+                          <p className="mt-2 text-xs text-slate-500">Uploaded by {uploaderName}</p>
+                        </div>
+                      </div>
+
+                      {item.contentType === 'video' ? (
+                        <div className="mt-3">
+                          {/\.(mp4|webm|mov|mkv|avi)$/i.test(videoUrl) || videoUrl.includes('/uploads/') ? (
+                            <video controls className="w-full rounded-lg border">
+                              <source src={videoUrl} />
+                              Your browser does not support video playback.
+                            </video>
+                          ) : (
+                            <a
+                              href={videoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                            >
+                              Open Video
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mt-3 flex gap-2">
+                          <a
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                          >
+                            View PDF
+                          </a>
+                          <a
+                            href={fileUrl}
+                            download={item.originalFileName || `${item.title}.pdf`}
+                            className="inline-flex rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                          >
+                            Download PDF
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </Card>
         </div>
 

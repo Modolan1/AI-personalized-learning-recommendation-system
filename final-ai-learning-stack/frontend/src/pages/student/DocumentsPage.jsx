@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Upload, Loader2 } from 'lucide-react';
 import StudentLayout from '../../layouts/StudentLayout';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import { studentService } from '../../services/studentService';
+import { useToast } from '../../context/ToastContext';
 
 const DEFAULT_MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const TABS = ['content', 'ai-chat', 'ai-actions', 'flashcards', 'quiz'];
@@ -40,6 +42,7 @@ function tabLabel(tab) {
 }
 
 export default function DocumentsPage() {
+  const toast = useToast();
   const [search, setSearch] = useState('');
   const [history, setHistory] = useState([]);
   const [selectedId, setSelectedId] = useState('');
@@ -149,6 +152,7 @@ export default function DocumentsPage() {
       await loadHistory(search);
       setSelectedId(created.id);
       setActiveTab('content');
+      toast('Document uploaded and analyzed successfully');
     } catch (requestError) {
       setError(requestError?.response?.data?.message || 'Unable to analyze document.');
     } finally {
@@ -177,6 +181,7 @@ export default function DocumentsPage() {
     try {
       const response = await studentService.submitGeneratedDocumentQuiz(selectedDoc._id, quizAnswers);
       setQuizResult(response.data);
+      toast('Quiz submitted successfully');
       await loadDocument(selectedDoc._id);
     } catch (requestError) {
       setError(requestError?.response?.data?.message || 'Unable to submit document quiz.');
@@ -203,6 +208,23 @@ export default function DocumentsPage() {
 
     const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
     downloadFile(`${selectedDoc.fileName.replace(/\.pdf$/i, '')}-attempt-history.csv`, csv, 'text/csv;charset=utf-8;');
+  };
+
+  const handleDeleteDocument = async (id) => {
+    if (!window.confirm('Delete this document and all its study data?')) return;
+    try {
+      await studentService.deleteDocument(id);
+      toast('Document deleted successfully');
+      if (selectedId === id) {
+        setSelectedId('');
+        setSelectedDoc(null);
+      }
+      await loadHistory(search);
+    } catch (requestError) {
+      const msg = requestError?.response?.data?.message || 'Unable to delete document.';
+      setError(msg);
+      toast(msg, 'error');
+    }
   };
 
   const renderTabContent = () => {
@@ -407,7 +429,9 @@ export default function DocumentsPage() {
             onChange={(event) => setDocumentFile(event.target.files?.[0] || null)}
           />
           <Button className="mt-3 w-full" disabled={isAnalyzing || !documentFile} onClick={handleAnalyze}>
-            {isAnalyzing ? 'Analyzing...' : 'Analyze & Save'}
+            {isAnalyzing
+              ? <><Loader2 className="inline-block mr-2 h-4 w-4 animate-spin" />Analyzing...</>
+              : <><Upload className="inline-block mr-2 h-4 w-4" />Analyze & Save</>}
           </Button>
 
           <div className="mt-6">
@@ -427,19 +451,17 @@ export default function DocumentsPage() {
               {isLoadingList && <p className="text-sm text-slate-500">Loading history...</p>}
               {!isLoadingList && !history.length && <p className="text-sm text-slate-500">No saved documents yet.</p>}
               {history.map((item) => (
-                <button
+                <div
                   key={item._id}
-                  type="button"
                   className={`w-full rounded-xl border p-3 text-left transition ${selectedId === item._id ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
-                  onClick={() => {
-                    setSelectedId(item._id);
-                    setActiveTab('content');
-                  }}
                 >
-                  <div className="font-medium text-slate-800">{item.fileName}</div>
-                  <div className="mt-1 text-xs text-slate-500">{formatDate(item.createdAt)}</div>
-                  <div className="mt-2 text-xs text-slate-600">Attempts: {item.attemptsCount} {item.latestScore != null ? `• Last score: ${item.latestScore}%` : ''}</div>
-                </button>
+                  <button type="button" className="w-full text-left" onClick={() => { setSelectedId(item._id); setActiveTab('content'); }}>
+                    <div className="font-medium text-slate-800">{item.fileName}</div>
+                    <div className="mt-1 text-xs text-slate-500">{formatDate(item.createdAt)}</div>
+                    <div className="mt-2 text-xs text-slate-600">Attempts: {item.attemptsCount} {item.latestScore != null ? `• Last score: ${item.latestScore}%` : ''}</div>
+                  </button>
+                  <button type="button" className="mt-2 text-xs text-rose-600 hover:underline" onClick={() => handleDeleteDocument(item._id)}>Delete</button>
+                </div>
               ))}
             </div>
           </div>

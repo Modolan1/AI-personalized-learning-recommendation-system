@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true },
   role: { type: String, enum: ['admin', 'student', 'instructor'], default: 'student' },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   learningGoal: { type: String, default: '' },
   skillLevel: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced'], default: 'Beginner' },
   preferredSubject: { type: String, default: '' },

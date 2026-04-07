@@ -1,42 +1,49 @@
 import { useEffect, useState } from 'react';
-import StudentLayout from '../../layouts/StudentLayout';
+import AdminLayout from '../../layouts/AdminLayout';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import { studentService } from '../../services/studentService';
+import { adminService } from '../../services/adminService';
 import { useToast } from '../../context/ToastContext';
 
-export default function ProfilePage() {
-  const toast = useToast();
+export default function AdminProfilePage() {
+  const addToast = useToast();
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
   useEffect(() => {
-    studentService.getProfile()
+    adminService.getProfile()
       .then((res) => { setError(''); setForm(res.data); })
-      .catch((err) => { console.error('Failed to load profile:', err); setError('Failed to load profile'); });
+      .catch((err) => {
+        console.error('Failed to load admin profile:', err);
+        setError('Failed to load profile');
+      });
   }, []);
-  if (error) return <StudentLayout><div className="text-red-600">{error}</div></StudentLayout>;
-  if (!form) return <StudentLayout><div>Loading...</div></StudentLayout>;
+
+  if (error) return <AdminLayout><div className="text-rose-600">{error}</div></AdminLayout>;
+  if (!form) return <AdminLayout><div>Loading...</div></AdminLayout>;
+
   const save = async () => {
     try {
-      const updated = await studentService.updateProfile(form);
+      const updated = await adminService.updateProfile(form);
       setForm(updated.data);
       setMessage('Profile updated successfully');
-      toast('Profile updated successfully');
+      addToast('Profile updated successfully');
     } catch (err) {
-      console.error('Failed to update profile:', err);
-      const msg = 'Failed to update profile. Please try again.';
+      console.error('Failed to update admin profile:', err);
+      const msg = err.response?.data?.message || 'Failed to update profile. Please try again.';
       setError(msg);
-      toast(msg, 'error');
+      addToast(msg, 'error');
     }
   };
+
   return (
-    <StudentLayout>
+    <AdminLayout>
       <Card className="max-w-3xl">
-        <h3 className="mb-4 text-lg font-semibold">My Profile</h3>
+        <h3 className="mb-4 text-lg font-semibold">Admin Profile</h3>
         {error && <div className="mb-4 rounded-xl bg-rose-50 p-4 text-rose-700">{error}</div>}
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="First Name" value={form.firstName || ''} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
@@ -57,6 +64,6 @@ export default function ProfilePage() {
         </div>
       </Card>
       <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
-    </StudentLayout>
+    </AdminLayout>
   );
 }

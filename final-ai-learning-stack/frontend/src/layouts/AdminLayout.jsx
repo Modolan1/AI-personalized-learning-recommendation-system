@@ -1,6 +1,9 @@
 import AppShell from '../components/layout/AppShell';
 const navItems = [
   { path: '/admin/dashboard', label: 'Dashboard' },
+  { path: '/admin/profile', label: 'Profile' },
+  { path: '/admin/admins', label: 'Manage Admins' },
+  { path: '/admin/categories', label: 'Manage Categories' },
   { path: '/admin/courses', label: 'Manage Courses' },
   { path: '/admin/quizzes', label: 'Manage Quizzes' },
   { path: '/admin/flashcards', label: 'Manage Flashcards' },

@@ -2,11 +2,13 @@ import express from 'express';
 import multer from 'multer';
 import { protect } from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
+import { validateObjectId } from '../middleware/validateObjectId.js';
 import { env } from '../config/env.js';
 import {
   getDashboard, getProfile, updateProfile, getCourses, getCourseDetail, getFlashcards, trackFlashcardReview, getQuizzes,
   submitQuiz, getAttempts, getRecommendations, refreshRecommendations, getDocumentUploadConfig,
-  analyzeDocument, submitGeneratedDocumentQuiz, getDocumentHistory, getDocumentById, askDocumentQuestion
+  analyzeDocument, submitGeneratedDocumentQuiz, getDocumentHistory, getDocumentById, deleteDocument, askDocumentQuestion,
+  getInstructorLearningContent
 } from '../controllers/studentController.js';
 
 const router = express.Router();
@@ -34,20 +36,22 @@ router.use(protect, authorizeRoles('student'));
 router.get('/dashboard', getDashboard);
 router.get('/documents/upload-config', getDocumentUploadConfig);
 router.get('/documents', getDocumentHistory);
-router.get('/documents/:id', getDocumentById);
+router.get('/documents/:id', validateObjectId, getDocumentById);
+router.delete('/documents/:id', validateObjectId, deleteDocument);
 router.post('/documents/analyze', upload.single('document'), analyzeDocument);
-router.post('/documents/:id/quiz/submit', submitGeneratedDocumentQuiz);
-router.post('/documents/:id/chat', askDocumentQuestion);
+router.post('/documents/:id/quiz/submit', validateObjectId, submitGeneratedDocumentQuiz);
+router.post('/documents/:id/chat', validateObjectId, askDocumentQuestion);
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.get('/courses', getCourses);
-router.get('/courses/:id', getCourseDetail);
+router.get('/courses/:id', validateObjectId, getCourseDetail);
 router.get('/flashcards', getFlashcards);
-router.post('/flashcards/:id/review', trackFlashcardReview);
+router.post('/flashcards/:id/review', validateObjectId, trackFlashcardReview);
 router.get('/quizzes', getQuizzes);
-router.post('/quizzes/:id/submit', submitQuiz);
+router.post('/quizzes/:id/submit', validateObjectId, submitQuiz);
 router.get('/attempts', getAttempts);
 router.get('/recommendations', getRecommendations);
 router.post('/recommendations/refresh', refreshRecommendations);
+router.get('/instructor-content', getInstructorLearningContent);
 
 export default router;

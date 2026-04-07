@@ -1,42 +1,49 @@
 import { useEffect, useState } from 'react';
-import StudentLayout from '../../layouts/StudentLayout';
+import InstructorLayout from '../../layouts/InstructorLayout';
 import Card from '../../components/common/Card';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import { studentService } from '../../services/studentService';
+import { instructorService } from '../../services/instructorService';
 import { useToast } from '../../context/ToastContext';
 
-export default function ProfilePage() {
-  const toast = useToast();
+export default function InstructorProfilePage() {
+  const addToast = useToast();
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
   useEffect(() => {
-    studentService.getProfile()
+    instructorService.getProfile()
       .then((res) => { setError(''); setForm(res.data); })
-      .catch((err) => { console.error('Failed to load profile:', err); setError('Failed to load profile'); });
+      .catch((err) => {
+        console.error('Failed to load instructor profile:', err);
+        setError('Failed to load profile');
+      });
   }, []);
-  if (error) return <StudentLayout><div className="text-red-600">{error}</div></StudentLayout>;
-  if (!form) return <StudentLayout><div>Loading...</div></StudentLayout>;
+
+  if (error) return <InstructorLayout><div className="text-rose-600">{error}</div></InstructorLayout>;
+  if (!form) return <InstructorLayout><div>Loading...</div></InstructorLayout>;
+
   const save = async () => {
     try {
-      const updated = await studentService.updateProfile(form);
+      const updated = await instructorService.updateProfile(form);
       setForm(updated.data);
       setMessage('Profile updated successfully');
-      toast('Profile updated successfully');
+      addToast('Profile updated successfully');
     } catch (err) {
-      console.error('Failed to update profile:', err);
-      const msg = 'Failed to update profile. Please try again.';
+      console.error('Failed to update instructor profile:', err);
+      const msg = err.response?.data?.message || 'Failed to update profile. Please try again.';
       setError(msg);
-      toast(msg, 'error');
+      addToast(msg, 'error');
     }
   };
+
   return (
-    <StudentLayout>
+    <InstructorLayout>
       <Card className="max-w-3xl">
-        <h3 className="mb-4 text-lg font-semibold">My Profile</h3>
+        <h3 className="mb-4 text-lg font-semibold">Instructor Profile</h3>
         {error && <div className="mb-4 rounded-xl bg-rose-50 p-4 text-rose-700">{error}</div>}
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="First Name" value={form.firstName || ''} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
@@ -57,6 +64,6 @@ export default function ProfilePage() {
         </div>
       </Card>
       <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
-    </StudentLayout>
+    </InstructorLayout>
   );
 }

@@ -6,6 +6,14 @@ export const getDashboard = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await instructorService.getDashboard(req.user.userId) });
 });
 
+export const getProfile = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await instructorService.getProfile(req.user.userId) });
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await instructorService.updateProfile(req.user.userId, req.body) });
+});
+
 export const getContent = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await instructorService.listContent(req.user.userId) });
 });
@@ -15,12 +23,12 @@ export const getCategories = asyncHandler(async (req, res) => {
 });
 
 export const createContent = asyncHandler(async (req, res) => {
-  const data = await instructorService.createContent(req.user.userId, req.body, req.file);
+  const data = await instructorService.createContent(req.user.userId, req.body, req.files);
   res.status(201).json({ success: true, data });
 });
 
 export const updateContent = asyncHandler(async (req, res) => {
-  const data = await instructorService.updateContent(req.user.userId, req.params.id, req.body, req.file);
+  const data = await instructorService.updateContent(req.user.userId, req.params.id, req.body, req.files);
   res.json({ success: true, data });
 });
 
