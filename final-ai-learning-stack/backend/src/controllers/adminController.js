@@ -1,0 +1,73 @@
+import { adminService } from '../services/adminService.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+
+export const getDashboard = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.getDashboard() });
+});
+
+export const getStudents = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listStudents() });
+});
+
+export const getCategories = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listCategories() });
+});
+
+export const createCategory = asyncHandler(async (req, res) => {
+  res.status(201).json({ success: true, data: await adminService.createCategory(req.body) });
+});
+
+export const getCategoryAnalytics = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.getCategoryAnalytics() });
+});
+
+export const getCourses = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listCourses() });
+});
+
+export const createCourse = asyncHandler(async (req, res) => {
+  res.status(201).json({ success: true, data: await adminService.createCourse(req.user.userId, req.body) });
+});
+
+export const updateCourse = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.updateCourse(req.params.id, req.body) });
+});
+
+export const deleteCourse = asyncHandler(async (req, res) => {
+  await adminService.deleteCourse(req.params.id);
+  res.json({ success: true, message: 'Course deleted' });
+});
+
+export const getQuizzes = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listQuizzes() });
+});
+
+export const createQuiz = asyncHandler(async (req, res) => {
+  res.status(201).json({ success: true, data: await adminService.createQuiz(req.user.userId, req.body) });
+});
+
+export const updateQuiz = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.updateQuiz(req.params.id, req.body) });
+});
+
+export const deleteQuiz = asyncHandler(async (req, res) => {
+  await adminService.deleteQuiz(req.params.id);
+  res.json({ success: true, message: 'Quiz deleted' });
+});
+
+export const getFlashcards = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listFlashcards() });
+});
+
+export const createFlashcard = asyncHandler(async (req, res) => {
+  res.status(201).json({ success: true, data: await adminService.createFlashcard(req.user.userId, req.body) });
+});
+
+export const updateFlashcard = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.updateFlashcard(req.params.id, req.body) });
+});
+
+export const deleteFlashcard = asyncHandler(async (req, res) => {
+  await adminService.deleteFlashcard(req.params.id);
+  res.json({ success: true, message: 'Flashcard deleted' });
+});

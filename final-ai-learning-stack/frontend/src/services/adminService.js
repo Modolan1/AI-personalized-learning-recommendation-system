@@ -1,0 +1,20 @@
+import API from './api';
+export const adminService = {
+  getDashboard: async () => (await API.get('/admin/dashboard')).data,
+  getStudents: async () => (await API.get('/admin/students')).data,
+  getCategories: async () => (await API.get('/admin/categories')).data,
+  createCategory: async (payload) => (await API.post('/admin/categories', payload)).data,
+  getCategoryAnalytics: async () => (await API.get('/admin/analytics/categories')).data,
+  getCourses: async () => (await API.get('/admin/courses')).data,
+  createCourse: async (payload) => (await API.post('/admin/courses', payload)).data,
+  updateCourse: async (id, payload) => (await API.put(`/admin/courses/${id}`, payload)).data,
+  deleteCourse: async (id) => (await API.delete(`/admin/courses/${id}`)).data,
+  getQuizzes: async () => (await API.get('/admin/quizzes')).data,
+  createQuiz: async (payload) => (await API.post('/admin/quizzes', payload)).data,
+  updateQuiz: async (id, payload) => (await API.put(`/admin/quizzes/${id}`, payload)).data,
+  deleteQuiz: async (id) => (await API.delete(`/admin/quizzes/${id}`)).data,
+  getFlashcards: async () => (await API.get('/admin/flashcards')).data,
+  createFlashcard: async (payload) => (await API.post('/admin/flashcards', payload)).data,
+  updateFlashcard: async (id, payload) => (await API.put(`/admin/flashcards/${id}`, payload)).data,
+  deleteFlashcard: async (id) => (await API.delete(`/admin/flashcards/${id}`)).data,
+};
