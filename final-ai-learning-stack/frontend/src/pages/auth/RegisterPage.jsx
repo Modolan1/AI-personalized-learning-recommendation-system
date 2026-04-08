@@ -36,7 +36,12 @@ export default function RegisterPage() {
     setPasswordTouched(true);
     if (!allChecksMet) return;
     try {
-      const user = await register(form);
+      const result = await register(form);
+      const user = result?.user;
+      if (!user) {
+        setError(result?.message || 'Registration completed. Please wait for approval.');
+        return;
+      }
       navigate(user.role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');

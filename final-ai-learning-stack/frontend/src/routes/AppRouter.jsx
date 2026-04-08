@@ -10,6 +10,7 @@ import ManageQuizzesPage from '../pages/admin/ManageQuizzesPage';
 import ManageFlashcardsPage from '../pages/admin/ManageFlashcardsPage';
 import CategoriesAnalyticsPage from '../pages/admin/CategoriesAnalyticsPage';
 import StudentsPage from '../pages/admin/StudentsPage';
+import InstructorsPage from '../pages/admin/InstructorsPage';
 import StudentDashboardPage from '../pages/student/StudentDashboardPage';
 import CoursesPage from '../pages/student/CoursesPage';
 import CourseDetailPage from '../pages/student/CourseDetailPage';
@@ -21,6 +22,8 @@ import VideosPage from '../pages/student/VideosPage';
 import InstructorDashboardPage from '../pages/instructor/InstructorDashboardPage';
 import InstructorProfilePage from '../pages/instructor/InstructorProfilePage';
 import ManageContentPage from '../pages/instructor/ManageContentPage';
+import InstructorLoginPage from '../pages/auth/InstructorLoginPage';
+import InstructorRegisterPage from '../pages/auth/InstructorRegisterPage';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -43,6 +46,8 @@ export default function AppRouter() {
       <Route path="/" element={<HomeEntryPage />} />
       <Route path="/login" element={<HomeEntryPage />} />
       <Route path="/register" element={<HomeEntryPage />} />
+      <Route path="/instructor/login" element={<InstructorLoginPage />} />
+      <Route path="/instructor/register" element={<InstructorRegisterPage />} />
 
       <Route path="/admin/dashboard" element={<ProtectedRoute roles={['admin']}><AdminDashboardPage /></ProtectedRoute>} />
       <Route path="/admin/profile" element={<ProtectedRoute roles={['admin']}><AdminProfilePage /></ProtectedRoute>} />
@@ -53,6 +58,7 @@ export default function AppRouter() {
       <Route path="/admin/flashcards" element={<ProtectedRoute roles={['admin']}><ManageFlashcardsPage /></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute roles={['admin']}><CategoriesAnalyticsPage /></ProtectedRoute>} />
       <Route path="/admin/students" element={<ProtectedRoute roles={['admin']}><StudentsPage /></ProtectedRoute>} />
+      <Route path="/admin/instructors" element={<ProtectedRoute roles={['admin']}><InstructorsPage /></ProtectedRoute>} />
 
       <Route path="/student/dashboard" element={<ProtectedRoute roles={['student']}><StudentDashboardPage /></ProtectedRoute>} />
       <Route path="/student/courses" element={<ProtectedRoute roles={['student']}><CoursesPage /></ProtectedRoute>} />

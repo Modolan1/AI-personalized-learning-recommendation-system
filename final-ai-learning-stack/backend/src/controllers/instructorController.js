@@ -46,3 +46,13 @@ export const trackView = asyncHandler(async (req, res) => {
   await instructorContentRepository.incrementViewCount(req.params.id);
   res.json({ success: true });
 });
+
+export const getMyCourses = asyncHandler(async (req, res) => {
+  const data = await instructorService.getMyCourses(req.user.userId);
+  res.json({ success: true, data });
+});
+
+export const getStudentsEnrolled = asyncHandler(async (req, res) => {
+  const data = await instructorService.getStudentsEnrolled(req.user.userId);
+  res.json({ success: true, data });
+});

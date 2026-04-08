@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   preferredLearningStyle: { type: String, default: '' },
   weeklyLearningGoalHours: { type: Number, default: 5 },
   recommendationOptIn: { type: Boolean, default: true },
-  status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+  status: { type: String, enum: ['pending', 'active', 'inactive'], default: 'active' },
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

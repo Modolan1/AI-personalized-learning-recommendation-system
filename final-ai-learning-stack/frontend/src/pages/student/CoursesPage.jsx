@@ -7,15 +7,41 @@ import { studentService } from '../../services/studentService';
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState(new Set());
   const [error, setError] = useState(null);
+  
   useEffect(() => { 
-    studentService.getCourses()
-      .then((res) => { setError(null); setCourses(res.data); })
-      .catch((err) => { console.error('Failed to load courses:', err); setError('Failed to load courses'); })
+    const fetchData = async () => {
+      try {
+        const [coursesRes, dashboardRes] = await Promise.all([
+          studentService.getCourses(),
+          studentService.getDashboard(),
+        ]);
+        setError(null);
+        setCourses(coursesRes.data || []);
+        
+        const enrolled = new Set();
+        (dashboardRes.data?.progress || []).forEach(p => {
+          if (p.course?._id) {
+            enrolled.add(p.course._id);
+          }
+        });
+        setEnrolledCourses(enrolled);
+      } catch (err) {
+        console.error('Failed to load courses:', err);
+        setError('Failed to load courses');
+      }
+    };
+    fetchData();
   }, []);
+
   return (
     <StudentLayout>
       {error && <div className="mb-4 rounded-xl bg-rose-50 p-4 text-rose-700">{error}</div>}
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold">Available Courses</h1>
+        <p className="mt-1 text-sm text-slate-500">Browse all courses, view details, and enroll to start learning</p>
+      </div>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {courses.map((course) => (
           <Card key={course._id}>
@@ -24,7 +50,12 @@ export default function CoursesPage() {
             <h3 className="mt-2 text-xl font-bold text-slate-900">{course.title}</h3>
             <p className="mt-2 text-sm text-slate-600">{course.description}</p>
             <div className="mt-4 text-sm text-slate-500">{course.level} • {course.durationHours} hour(s) • {course.modules?.length || 0} modules</div>
-            <Link to={`/student/courses/${course._id}`}><Button className="mt-4">View Course Details</Button></Link>
+            {enrolledCourses.has(course._id) && (
+              <div className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                ✓ Enrolled
+              </div>
+            )}
+            <Link to={`/student/courses/${course._id}`}><Button className="mt-4 w-full">View Course Details</Button></Link>
           </Card>
         ))}
       </div>

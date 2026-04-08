@@ -1,6 +1,8 @@
 import { instructorContentRepository } from '../repositories/instructorContentRepository.js';
 import { categoryRepository } from '../repositories/categoryRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
+import { courseRepository } from '../repositories/courseRepository.js';
+import { progressRepository } from '../repositories/progressRepository.js';
 
 export const instructorService = {
   getProfile: (instructorId) => userRepository.findById(instructorId),
@@ -135,5 +137,62 @@ export const instructorService = {
     if (filter.contentType) query.contentType = filter.contentType;
     if (filter.category) query.category = filter.category;
     return instructorContentRepository.findAllPublished(query);
+  },
+
+  async getMyCourses(instructorId) {
+    const allCourses = await courseRepository.findAll();
+    const allEnrollments = await progressRepository.findAll();
+
+    const instructorCourses = allCourses.filter(course => 
+      course.createdBy?.toString() === instructorId || course.createdBy === instructorId
+    );
+    
+    const coursesWithEnrollment = instructorCourses.map((course) => {
+      const courseEnrollments = allEnrollments.filter(enrollment => 
+        enrollment.course?._id?.toString() === course._id.toString() || 
+        enrollment.course?._id === course._id
+      );
+      
+      return {
+        _id: course._id,
+        title: course.title,
+        description: course.description,
+        category: course.category,
+        level: course.level,
+        durationHours: course.durationHours,
+        thumbnail: course.thumbnail,
+        enrollmentCount: courseEnrollments.length,
+        createdAt: course.createdAt,
+        updatedAt: course.updatedAt,
+      };
+    });
+
+    return coursesWithEnrollment.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
+
+  async getStudentsEnrolled(instructorId) {
+    const courses = await courseRepository.findAll();
+    const instructorCourseIds = courses
+      .filter(course => course.createdBy?.toString() === instructorId || course.createdBy === instructorId)
+      .map(c => c._id);
+
+    if (instructorCourseIds.length === 0) {
+      return [];
+    }
+
+    const allEnrollments = await progressRepository.findAll();
+    const instructorEnrollments = allEnrollments.filter(enrollment => 
+      instructorCourseIds.some(courseId => enrollment.course?._id?.toString() === courseId.toString() || enrollment.course?._id === courseId)
+    );
+
+    return instructorEnrollments.map(enrollment => ({
+      _id: enrollment._id,
+      studentName: `${enrollment.student?.firstName || ''} ${enrollment.student?.lastName || ''}`.trim(),
+      studentEmail: enrollment.student?.email,
+      courseTitle: enrollment.course?.title,
+      enrollmentDate: enrollment.createdAt,
+      completionPercent: enrollment.completionPercent,
+      lastAccessedAt: enrollment.lastAccessedAt,
+    })).sort((a, b) => new Date(b.enrollmentDate) - new Date(a.enrollmentDate));
   },
 };

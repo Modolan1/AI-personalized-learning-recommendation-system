@@ -33,6 +33,7 @@ export const adminService = {
   },
 
   listStudents: () => userRepository.findStudents(),
+  listInstructors: () => userRepository.findInstructors(),
   listAdmins: () => userRepository.findAdmins(),
   getProfile: (adminId) => userRepository.findById(adminId),
 
@@ -95,6 +96,31 @@ export const adminService = {
     const student = await userRepository.deleteById(id);
     if (!student) throw new Error('Student not found');
     return student;
+  },
+
+  async updateInstructor(id, data) {
+    const instructor = await userRepository.findInstructorById(id);
+    if (!instructor) throw new Error('Instructor not found');
+
+    const allowedStatuses = ['pending', 'active', 'inactive'];
+    const nextStatus = allowedStatuses.includes(data.status) ? data.status : instructor.status;
+
+    return userRepository.updateById(id, {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      skillLevel: data.skillLevel,
+      preferredSubject: data.preferredSubject,
+      preferredLearningStyle: data.preferredLearningStyle,
+      learningGoal: data.learningGoal,
+      status: nextStatus,
+    });
+  },
+
+  async deleteInstructor(id) {
+    const instructor = await userRepository.findInstructorById(id);
+    if (!instructor) throw new Error('Instructor not found');
+    return userRepository.deleteById(id);
   },
 
   createCourse: (adminId, data) => courseRepository.create({

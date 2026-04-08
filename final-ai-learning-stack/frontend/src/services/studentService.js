@@ -15,6 +15,7 @@ export const studentService = {
   updateProfile: async (payload) => (await API.put('/student/profile', payload)).data,
   getCourses: async () => (await API.get('/student/courses')).data,
   getCourseDetail: async (id) => (await API.get(`/student/courses/${id}`)).data,
+  enrollCourse: async (id) => (await API.post(`/student/courses/${id}/enroll`)).data,
   getFlashcards: async (courseId) => (await API.get('/student/flashcards', { params: courseId ? { courseId } : {} })).data,
   trackFlashcardReview: async (id) => (await API.post(`/student/flashcards/${id}/review`)).data,
   getQuizzes: async () => (await API.get('/student/quizzes')).data,

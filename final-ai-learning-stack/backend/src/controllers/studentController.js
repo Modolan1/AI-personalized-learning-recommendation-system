@@ -22,6 +22,10 @@ export const getCourseDetail = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await studentService.getCourseDetail(req.user.userId, req.params.id) });
 });
 
+export const enrollCourse = asyncHandler(async (req, res) => {
+  res.status(201).json({ success: true, data: await studentService.enrollCourse(req.user.userId, req.params.id) });
+});
+
 export const getFlashcards = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await studentService.listFlashcards(req.user.userId, req.query.courseId) });
 });

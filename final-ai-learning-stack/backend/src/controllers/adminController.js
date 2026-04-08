@@ -30,6 +30,10 @@ export const getStudents = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await adminService.listStudents() });
 });
 
+export const getInstructors = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.listInstructors() });
+});
+
 export const getAdmins = asyncHandler(async (req, res) => {
   res.json({ success: true, data: await adminService.listAdmins() });
 });
@@ -53,6 +57,15 @@ export const updateStudent = asyncHandler(async (req, res) => {
 export const deleteStudent = asyncHandler(async (req, res) => {
   await adminService.deleteStudent(req.params.id);
   res.json({ success: true, message: 'Student deleted' });
+});
+
+export const updateInstructor = asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await adminService.updateInstructor(req.params.id, req.body) });
+});
+
+export const deleteInstructor = asyncHandler(async (req, res) => {
+  await adminService.deleteInstructor(req.params.id);
+  res.json({ success: true, message: 'Instructor deleted' });
 });
 
 export const createCourse = asyncHandler(async (req, res) => {

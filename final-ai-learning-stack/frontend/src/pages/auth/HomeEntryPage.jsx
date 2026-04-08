@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../hooks/useAuth';
+import { authService } from '../../services/authService';
 
 const PASSWORD_MIN = 8;
 const PASSWORD_MAX = 128;
@@ -94,6 +95,11 @@ export default function HomeEntryPage() {
   const [showLogin, setShowLogin] = useState(false);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [showCourseEnrollment, setShowCourseEnrollment] = useState(false);
+
+  const [courses, setCourses] = useState([]);
+  const [selectedCourseForEnrollment, setSelectedCourseForEnrollment] = useState(null);
+  const [coursesLoading, setCoursesLoading] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
@@ -128,7 +134,22 @@ export default function HomeEntryPage() {
   }, [location.pathname]);
 
   useEffect(() => {
-    const sections = ['home', 'about', 'contact'];
+    const fetchCourses = async () => {
+      try {
+        setCoursesLoading(true);
+        const res = await authService.getPublishedCourses();
+        setCourses(res.data || []);
+      } catch (err) {
+        console.error('Failed to load courses:', err);
+      } finally {
+        setCoursesLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    const sections = ['home', 'courses', 'about', 'contact'];
     const elements = sections
       .map((id) => document.getElementById(id))
       .filter(Boolean);
@@ -190,6 +211,24 @@ export default function HomeEntryPage() {
     setShowRegister(true);
   };
 
+  const handleSelectCourseForEnrollment = (course) => {
+    setSelectedCourseForEnrollment(course);
+    setStepIndex(0);
+    setOnboardingAnswers({
+      learningGoal: '',
+      preferredSubject: '',
+      skillLevel: '',
+      preferredLearningStyle: '',
+      weeklyLearningGoalHours: '',
+    });
+    setShowCourseEnrollment(true);
+  };
+
+  const completeCourseQuestionnaire = () => {
+    setShowCourseEnrollment(false);
+    setShowRegister(true);
+  };
+
   const handleLogin = async (event) => {
     event.preventDefault();
 
@@ -222,7 +261,16 @@ export default function HomeEntryPage() {
     };
 
     try {
-      const user = await register(payload);
+      const result = await register(payload);
+      if (result?.pendingApproval) {
+        setRegisterError(result.message || 'Registration submitted. Wait for admin approval.');
+        return;
+      }
+      const user = result?.user;
+      if (!user) {
+        setRegisterError('Registration completed, but login session was not created. Please log in.');
+        return;
+      }
       setShowRegister(false);
       navigate(
         user.role === 'admin'
@@ -240,10 +288,13 @@ export default function HomeEntryPage() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#dbeafe,_#f8fafc_45%,_#e2e8f0)] text-slate-900">
       <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <button type="button" onClick={() => handleSectionNav('home')} className="text-xl font-bold tracking-tight text-indigo-700">LearnAI</button>
+          <button type="button" onClick={() => handleSectionNav('home')} className="text-xl font-bold tracking-tight text-indigo-700">LearnWithAI</button>
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
+            <button type="button" onClick={() => handleSectionNav('courses')} className={`transition hover:text-indigo-700 ${activeSection === 'courses' ? 'text-indigo-700' : ''}`}>Enroll for Courses</button>
             <button type="button" onClick={() => handleSectionNav('about')} className={`transition hover:text-indigo-700 ${activeSection === 'about' ? 'text-indigo-700' : ''}`}>About</button>
             <button type="button" onClick={() => handleSectionNav('contact')} className={`transition hover:text-indigo-700 ${activeSection === 'contact' ? 'text-indigo-700' : ''}`}>Contact</button>
+            <Link to="/instructor/register" className="transition hover:text-indigo-700">Join as Instructor</Link>
+            <Link to="/instructor/login" className="transition hover:text-indigo-700">Instructor Login</Link>
             <button type="button" onClick={() => setShowLogin(true)} className="hover:text-indigo-700">Login</button>
             <Button onClick={openQuestionnaire}>Get Started</Button>
           </nav>
@@ -261,8 +312,11 @@ export default function HomeEntryPage() {
         {mobileMenuOpen && (
           <div className="border-t border-slate-200 bg-white px-4 py-3 md:hidden">
             <div className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+              <button type="button" onClick={() => handleSectionNav('courses')} className={`rounded-lg px-3 py-2 text-left ${activeSection === 'courses' ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50'}`}>Enroll for Courses</button>
               <button type="button" onClick={() => handleSectionNav('about')} className={`rounded-lg px-3 py-2 text-left ${activeSection === 'about' ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50'}`}>About</button>
               <button type="button" onClick={() => handleSectionNav('contact')} className={`rounded-lg px-3 py-2 text-left ${activeSection === 'contact' ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50'}`}>Contact</button>
+              <Link to="/instructor/register" className="rounded-lg px-3 py-2 text-left hover:bg-slate-50" onClick={() => setMobileMenuOpen(false)}>Join as Instructor</Link>
+              <Link to="/instructor/login" className="rounded-lg px-3 py-2 text-left hover:bg-slate-50" onClick={() => setMobileMenuOpen(false)}>Instructor Login</Link>
               <button
                 type="button"
                 onClick={() => {
@@ -313,6 +367,42 @@ export default function HomeEntryPage() {
               <li>2. Get AI recommendation profile based on your answers.</li>
               <li>3. Create account and enter your personalized dashboard.</li>
             </ol>
+          </div>
+        </section>
+
+        <section id="courses" className="mt-20">
+          <h2 className="mb-8 text-3xl font-bold">Available Courses to Enroll</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {coursesLoading ? (
+              <p className="col-span-full text-center text-slate-500">Loading courses...</p>
+            ) : courses.length === 0 ? (
+              <p className="col-span-full text-center text-slate-500">No courses available yet.</p>
+            ) : (
+              courses.map((course) => (
+                <button
+                  key={course._id}
+                  type="button"
+                  onClick={() => handleSelectCourseForEnrollment(course)}
+                  className="group text-left transition hover:scale-105"
+                >
+                  <div className="rounded-2xl bg-white p-5 shadow-md transition group-hover:shadow-xl">
+                    {course.thumbnail && (
+                      <img src={course.thumbnail} alt={course.title} className="h-40 w-full rounded-lg object-cover" />
+                    )}
+                    <h3 className="mt-4 font-semibold text-slate-900 group-hover:text-indigo-700">{course.title}</h3>
+                    <p className="mb-3 mt-2 text-xs text-slate-500">{course.category?.name}</p>
+                    <p className="text-sm text-slate-600 line-clamp-2">{course.description}</p>
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-xs text-slate-500">{course.level} • {course.durationHours}h</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-semibold text-amber-500">★ 4.5</span>
+                      </div>
+                    </div>
+                    <Button className="mt-4 w-full">Enroll Now</Button>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </section>
 
@@ -385,6 +475,48 @@ export default function HomeEntryPage() {
         </Modal>
       )}
 
+      {showCourseEnrollment && (
+        <Modal title={`Enroll in ${selectedCourseForEnrollment?.title}`} onClose={() => setShowCourseEnrollment(false)}>
+          <div className="mb-6 rounded-xl bg-indigo-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Course Selected</p>
+            <p className="mt-2 text-sm text-slate-700">Complete this quick questionnaire to personalize your learning experience for this course.</p>
+          </div>
+
+          <div className="mb-4">
+            <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+              <span>Step {stepIndex + 1} of {onboardingSteps.length}</span>
+              <span>{questionProgress}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-100">
+              <div className="h-2 rounded-full bg-indigo-600" style={{ width: `${questionProgress}%` }} />
+            </div>
+          </div>
+
+          <h4 className="text-lg font-semibold text-slate-900">{currentStep.title}</h4>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {currentStep.options.map((option) => (
+              <button
+                type="button"
+                key={option}
+                onClick={() => setOnboardingAnswers((prev) => ({ ...prev, [currentStep.key]: option }))}
+                className={`rounded-xl border px-4 py-3 text-left text-sm transition ${currentValue === option ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-6 flex gap-2">
+            <Button variant="secondary" onClick={() => setStepIndex((prev) => Math.max(0, prev - 1))} disabled={stepIndex === 0}>Previous</Button>
+            {stepIndex < onboardingSteps.length - 1 ? (
+              <Button onClick={() => setStepIndex((prev) => Math.min(onboardingSteps.length - 1, prev + 1))} disabled={!currentValue}>Next</Button>
+            ) : (
+              <Button onClick={completeCourseQuestionnaire} disabled={!currentValue}>Continue to Registration</Button>
+            )}
+          </div>
+        </Modal>
+      )}
+
       {showRegister && (
         <Modal title="Create Your Account" onClose={() => setShowRegister(false)}>
           <div className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4">
@@ -402,15 +534,9 @@ export default function HomeEntryPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Account Role</label>
-              <select
-                className="w-full rounded-xl border border-slate-200 p-3"
-                value={registerForm.role}
-                onChange={(event) => setRegisterForm((prev) => ({ ...prev, role: event.target.value }))}
-              >
-                <option value="student">Student</option>
-                <option value="instructor">Instructor</option>
-              </select>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Account Type</label>
+              <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">Student account</div>
+              <p className="mt-1 text-xs text-slate-500">Instructor applications are available from the "Join as Instructor" menu.</p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

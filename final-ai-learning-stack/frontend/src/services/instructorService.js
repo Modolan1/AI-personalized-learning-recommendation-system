@@ -6,6 +6,8 @@ export const instructorService = {
   updateProfile: async (payload) => (await API.put('/instructor/profile', payload)).data,
   getContent: async () => (await API.get('/instructor/content')).data,
   getCategories: async () => (await API.get('/instructor/categories')).data,
+  getMyCourses: async () => (await API.get('/instructor/my-courses')).data,
+  getStudentsEnrolled: async () => (await API.get('/instructor/students-enrolled')).data,
   createContent: async (formData) => (await API.post('/instructor/content', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })).data,

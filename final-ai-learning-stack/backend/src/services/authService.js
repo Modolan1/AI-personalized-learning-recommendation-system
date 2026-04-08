@@ -1,10 +1,13 @@
 import { userRepository } from '../repositories/userRepository.js';
 import { activityRepository } from '../repositories/activityRepository.js';
+import { courseRepository } from '../repositories/courseRepository.js';
 import { generateToken } from '../utils/generateToken.js';
 import { hashPassword, verifyPassword } from '../utils/hashPassword.js';
 import { validatePassword } from '../utils/validatePassword.js';
 
 export const authService = {
+  listPublishedCourses: () => courseRepository.findAllPublished(),
+
   async register(data) {
     const existing = await userRepository.findByEmail(String(data.email));
     if (existing) throw new Error('User already exists');
@@ -13,18 +16,35 @@ export const authService = {
     if (passwordErrors.length) throw new Error(passwordErrors.join(' '));
 
     const passwordHash = await hashPassword(data.password);
+    const isInstructor = data.role === 'instructor';
     const user = await userRepository.create({
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
       passwordHash,
-      role: ['admin', 'instructor'].includes(data.role) ? data.role : 'student',
+      role: isInstructor ? 'instructor' : 'student',
+      status: isInstructor ? 'pending' : 'active',
       learningGoal: data.learningGoal || '',
       skillLevel: data.skillLevel || 'Beginner',
       preferredSubject: data.preferredSubject || '',
       preferredLearningStyle: data.preferredLearningStyle || '',
       weeklyLearningGoalHours: data.weeklyLearningGoalHours || 5,
     });
+
+    if (isInstructor) {
+      return {
+        pendingApproval: true,
+        message: 'Instructor registration submitted. Your account will be active after admin approval.',
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+        },
+      };
+    }
 
     return {
       user: {
@@ -45,6 +65,12 @@ export const authService = {
 
     const valid = await verifyPassword(String(password), user.passwordHash);
     if (!valid) throw new Error('Invalid email or password');
+
+    if (user.role === 'instructor' && user.status !== 'active') {
+      const pendingError = new Error('Instructor account is pending admin approval. Please wait for approval.');
+      pendingError.statusCode = 403;
+      throw pendingError;
+    }
 
     if (user.role === 'student') {
       await activityRepository.create({

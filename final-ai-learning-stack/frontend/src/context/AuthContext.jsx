@@ -26,12 +26,13 @@ export function AuthProvider({ children }) {
 
   const register = async (payload) => {
     const result = await authService.register(payload);
-    const nextUser = result.data.user;
-    const token = result.data.token;
-    setUser(nextUser);
-    localStorage.setItem('pls_user', JSON.stringify(nextUser));
-    localStorage.setItem('pls_token', token);
-    return nextUser;
+    const data = result.data;
+    if (data?.token && data?.user) {
+      setUser(data.user);
+      localStorage.setItem('pls_user', JSON.stringify(data.user));
+      localStorage.setItem('pls_token', data.token);
+    }
+    return data;
   };
 
   const logout = () => {

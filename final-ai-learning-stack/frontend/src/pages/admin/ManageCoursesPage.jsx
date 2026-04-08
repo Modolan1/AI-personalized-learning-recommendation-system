@@ -12,7 +12,7 @@ export default function ManageCoursesPage() {
   const [categories, setCategories] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
-    title: '', description: '', category: '', level: 'Beginner', durationHours: 1, thumbnail: '',
+    title: '', description: '', category: '', level: 'Beginner', durationHours: 1, thumbnail: '', isPublished: true,
     modules: [{ title: '', durationMinutes: 20, type: 'reading' }],
   });
 
@@ -34,7 +34,7 @@ export default function ManageCoursesPage() {
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({ title: '', description: '', category: categories[0]?._id || '', level: 'Beginner', durationHours: 1, thumbnail: '', modules: [{ title: '', durationMinutes: 20, type: 'reading' }] });
+    setForm({ title: '', description: '', category: categories[0]?._id || '', level: 'Beginner', durationHours: 1, thumbnail: '', isPublished: true, modules: [{ title: '', durationMinutes: 20, type: 'reading' }] });
   };
 
   const startEdit = (course) => {
@@ -46,6 +46,7 @@ export default function ManageCoursesPage() {
       level: course.level,
       durationHours: course.durationHours,
       thumbnail: course.thumbnail || '',
+      isPublished: course.isPublished ?? true,
       modules: course.modules?.length ? course.modules.map((m) => ({ title: m.title, durationMinutes: m.durationMinutes, type: m.type })) : [{ title: '', durationMinutes: 20, type: 'reading' }],
     });
   };
@@ -78,6 +79,16 @@ export default function ManageCoursesPage() {
     }
   };
 
+  const togglePublish = async (id, currentStatus) => {
+    try {
+      await adminService.updateCourse(id, { isPublished: !currentStatus });
+      toast(!currentStatus ? 'Course published to landing page' : 'Course hidden from landing page');
+      load();
+    } catch (err) {
+      toast(err?.response?.data?.message || 'Failed to update course', 'error');
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="grid gap-6 lg:grid-cols-3">
@@ -102,6 +113,18 @@ export default function ManageCoursesPage() {
               </div>
               <Input label="Duration Hours" type="number" value={form.durationHours} onChange={(e) => setForm({ ...form, durationHours: e.target.value })} />
             </div>
+            <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 cursor-pointer hover:bg-slate-50">
+              <input
+                type="checkbox"
+                checked={form.isPublished}
+                onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
+                className="h-4 w-4 rounded accent-indigo-600"
+              />
+              <div>
+                <div className="font-medium text-slate-700">Publish to Landing Page</div>
+                <div className="text-xs text-slate-500">Make this course visible to students on the landing page</div>
+              </div>
+            </label>
             <div className="space-y-3">
               <div className="text-sm font-medium text-slate-700">Modules</div>
               {form.modules.map((module, idx) => (
@@ -128,14 +151,24 @@ export default function ManageCoursesPage() {
           {courses.map((course) => (
             <Card key={course._id}>
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-xs font-medium uppercase tracking-wide text-indigo-600">{course.category?.name}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs font-medium uppercase tracking-wide text-indigo-600">{course.category?.name}</div>
+                    {course.isPublished ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">● Published</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-800">● Draft</span>
+                    )}
+                  </div>
                   <h3 className="mt-2 text-xl font-bold text-slate-900">{course.title}</h3>
                   <p className="mt-2 text-sm text-slate-600">{course.description}</p>
                   <div className="mt-3 text-sm text-slate-500">{course.level} • {course.durationHours} hour(s) • {course.modules?.length || 0} modules</div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="secondary" onClick={() => startEdit(course)}>Edit</Button>
+                  <Button variant={course.isPublished ? "secondary" : "primary"} onClick={() => togglePublish(course._id, course.isPublished)}>
+                    {course.isPublished ? '📴 Unpublish' : '📱 Publish'}
+                  </Button>
                   <Button variant="danger" onClick={() => removeCourse(course._id)}>Delete</Button>
                 </div>
               </div>

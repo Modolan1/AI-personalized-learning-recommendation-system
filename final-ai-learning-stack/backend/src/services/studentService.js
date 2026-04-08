@@ -78,7 +78,7 @@ export const studentService = {
   },
 
   async listCourses(studentId) {
-    const courses = await courseRepository.findAll();
+    const courses = await courseRepository.findAllPublished();
     await Promise.all(courses.slice(0, 1).map((course) =>
       activityRepository.create({
         student: studentId,
@@ -124,6 +124,33 @@ export const studentService = {
         completionPercent: 0,
       },
     };
+  },
+
+  async enrollCourse(studentId, courseId) {
+    const course = await courseRepository.findById(courseId);
+    if (!course) throw new Error('Course not found');
+
+    const existingProgress = await progressRepository.findByStudentAndCourse(studentId, courseId);
+    if (existingProgress) {
+      return existingProgress;
+    }
+
+    const newProgress = await progressRepository.upsert(studentId, courseId, {
+      completedModules: 0,
+      totalModules: course.modules?.length || 10,
+      completionPercent: 0,
+      lastAccessedAt: new Date(),
+    });
+
+    await activityRepository.create({
+      student: studentId,
+      activityType: 'course_enrollment',
+      resourceType: 'course',
+      resourceId: courseId,
+      metadata: { title: course.title },
+    });
+
+    return newProgress;
   },
 
   async listFlashcards(studentId, courseId) {

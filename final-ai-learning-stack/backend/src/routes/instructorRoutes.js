@@ -9,7 +9,7 @@ import { validateObjectId } from '../middleware/validateObjectId.js';
 import {
   getDashboard, getProfile, updateProfile, getContent, getCategories,
   createContent, updateContent, deleteContent,
-  getContentById, trackView,
+  getContentById, trackView, getMyCourses, getStudentsEnrolled,
 } from '../controllers/instructorController.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -51,6 +51,8 @@ router.put('/profile', updateProfile);
 router.get('/content', getContent);
 router.get('/content/:id', validateObjectId, getContentById);
 router.get('/categories', getCategories);
+router.get('/my-courses', getMyCourses);
+router.get('/students-enrolled', getStudentsEnrolled);
 router.post('/content', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]), createContent);
 router.put('/content/:id', validateObjectId, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]), updateContent);
 router.delete('/content/:id', validateObjectId, deleteContent);

@@ -3,7 +3,7 @@ import { protect } from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
 import { validateObjectId } from '../middleware/validateObjectId.js';
 import {
-  getDashboard, getProfile, updateProfile, getStudents, getAdmins, getStudentById, updateStudent, deleteStudent,
+  getDashboard, getProfile, updateProfile, getStudents, getInstructors, getAdmins, getStudentById, updateStudent, deleteStudent, updateInstructor, deleteInstructor,
   getCategories, createCategory, updateCategory, deleteCategory, getCategoryAnalytics,
   getCourses, createCourse, updateCourse, deleteCourse,
   getQuizzes, createQuiz, updateQuiz, deleteQuiz,
@@ -17,10 +17,13 @@ router.get('/dashboard', getDashboard);
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.get('/students', getStudents);
+router.get('/instructors', getInstructors);
 router.get('/admins', getAdmins);
 router.get('/students/:id', validateObjectId, getStudentById);
 router.put('/students/:id', validateObjectId, updateStudent);
 router.delete('/students/:id', validateObjectId, deleteStudent);
+router.put('/instructors/:id', validateObjectId, updateInstructor);
+router.delete('/instructors/:id', validateObjectId, deleteInstructor);
 router.get('/categories', getCategories);
 router.post('/categories', createCategory);
 router.put('/categories/:id', validateObjectId, updateCategory);

@@ -5,7 +5,7 @@ import { authorizeRoles } from '../middleware/roleMiddleware.js';
 import { validateObjectId } from '../middleware/validateObjectId.js';
 import { env } from '../config/env.js';
 import {
-  getDashboard, getProfile, updateProfile, getCourses, getCourseDetail, getFlashcards, trackFlashcardReview, getQuizzes,
+  getDashboard, getProfile, updateProfile, getCourses, getCourseDetail, enrollCourse, getFlashcards, trackFlashcardReview, getQuizzes,
   submitQuiz, getAttempts, getRecommendations, refreshRecommendations, getDocumentUploadConfig,
   analyzeDocument, submitGeneratedDocumentQuiz, getDocumentHistory, getDocumentById, deleteDocument, askDocumentQuestion,
   getInstructorLearningContent
@@ -45,6 +45,7 @@ router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.get('/courses', getCourses);
 router.get('/courses/:id', validateObjectId, getCourseDetail);
+router.post('/courses/:id/enroll', validateObjectId, enrollCourse);
 router.get('/flashcards', getFlashcards);
 router.post('/flashcards/:id/review', validateObjectId, trackFlashcardReview);
 router.get('/quizzes', getQuizzes);

@@ -18,12 +18,39 @@ export default function CourseDetailPage() {
   const [data, setData] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState('');
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrolled, setEnrolled] = useState(false);
 
   useEffect(() => { 
     studentService.getCourseDetail(id)
-      .then((res) => { setError(''); setData(res.data); })
+      .then((res) => { 
+        setError(''); 
+        setData(res.data);
+        setEnrolled(!!res.data.progress?._id);
+      })
       .catch((err) => { console.error('Failed to load course:', err); setError('Failed to load course'); });
   }, [id]);
+
+  const handleEnroll = async () => {
+    try {
+      setEnrolling(true);
+      const result = await studentService.enrollCourse(id);
+      setEnrolled(true);
+      setData(prev => ({
+        ...prev,
+        progress: result.data || {
+          completedModules: 0,
+          totalModules: prev.course.modules?.length || 0,
+          completionPercent: 0,
+        }
+      }));
+    } catch (err) {
+      console.error('Failed to enroll:', err);
+      setError('Failed to enroll in course. Please try again.');
+    } finally {
+      setEnrolling(false);
+    }
+  };
   
   if (error) return <StudentLayout><div className="text-red-600">{error}</div></StudentLayout>;
   if (!data) return <StudentLayout><div>Loading...</div></StudentLayout>;
@@ -56,6 +83,20 @@ export default function CourseDetailPage() {
               <span>{data.course.durationHours} hour(s)</span>
               <span>{data.course.modules?.length || 0} modules</span>
             </div>
+            {!enrolled && (
+              <Button 
+                className="mt-6 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800" 
+                onClick={handleEnroll}
+                disabled={enrolling}
+              >
+                {enrolling ? 'Enrolling...' : 'Enroll Now'}
+              </Button>
+            )}
+            {enrolled && (
+              <div className="mt-6 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                ✓ You are enrolled in this course
+              </div>
+            )}
           </Card>
 
           <Card>

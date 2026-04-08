@@ -129,6 +129,34 @@ export default function StudentDashboardPage() {
         <Card><p className="text-sm text-slate-500">Saved Documents</p><h3 className="mt-2 text-3xl font-bold">{data.stats.documents || 0}</h3></Card>
       </div>
 
+      {data.progress.length > 0 && (
+        <div className="mt-6">
+          <Card>
+            <h3 className="mb-4 text-lg font-semibold">Your Enrolled Courses</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {data.progress.map((item) => (
+                <Link key={item._id} to={`/student/courses/${item.course?._id}`} className="group">
+                  <div className="rounded-xl border p-4 transition hover:border-indigo-300 hover:shadow-md">
+                    <h4 className="font-semibold text-slate-900 group-hover:text-indigo-600">{item.course?.title}</h4>
+                    <p className="mt-2 text-xs text-slate-500">{item.course?.category?.name}</p>
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                        <span>Progress</span>
+                        <span>{item.completionPercent}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100">
+                        <div className="h-2 rounded-full bg-indigo-600" style={{ width: `${item.completionPercent}%` }} />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">{item.completedModules} of {item.totalModules} modules</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <h3 className="mb-4 text-lg font-semibold">Personalized Suggestions</h3>

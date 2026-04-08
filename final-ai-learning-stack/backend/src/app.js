@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import instructorRoutes from './routes/instructorRoutes.js';
+import { authService } from './services/authService.js';
 import { sanitizeRequest } from './middleware/sanitizeMiddleware.js';
 import { notFound } from './middleware/notFoundMiddleware.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
@@ -36,6 +37,13 @@ app.use(morgan('dev'));
 
 app.use('/uploads', express.static(uploadsDir));
 app.get('/', (req, res) => res.json({ success: true, message: 'AI Learning API running' }));
+app.get('/api/public/courses', async (_req, res, next) => {
+	try {
+		res.json({ success: true, data: await authService.listPublishedCourses() });
+	} catch (error) {
+		next(error);
+	}
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
