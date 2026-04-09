@@ -6,11 +6,21 @@ import Input from '../../components/common/Input';
 import { adminService } from '../../services/adminService';
 import { useToast } from '../../context/ToastContext';
 
+const apiOrigin = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/api\/?$/, '');
+
+function getThumbnailUrl(thumbnail) {
+  if (!thumbnail) return '';
+  if (/^https?:\/\//i.test(thumbnail)) return thumbnail;
+  return `${apiOrigin}${thumbnail.startsWith('/') ? thumbnail : `/${thumbnail}`}`;
+}
+
 export default function ManageCoursesPage() {
   const toast = useToast();
   const [courses, setCourses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [form, setForm] = useState({
     title: '', description: '', category: '', level: 'Beginner', durationHours: 1, thumbnail: '', isPublished: true,
     modules: [{ title: '', durationMinutes: 20, type: 'reading' }],
@@ -34,11 +44,13 @@ export default function ManageCoursesPage() {
 
   const resetForm = () => {
     setEditingId(null);
+    setThumbnailPreview(null);
     setForm({ title: '', description: '', category: categories[0]?._id || '', level: 'Beginner', durationHours: 1, thumbnail: '', isPublished: true, modules: [{ title: '', durationMinutes: 20, type: 'reading' }] });
   };
 
   const startEdit = (course) => {
     setEditingId(course._id);
+    setThumbnailPreview(getThumbnailUrl(course.thumbnail) || null);
     setForm({
       title: course.title,
       description: course.description,
@@ -49,6 +61,29 @@ export default function ManageCoursesPage() {
       isPublished: course.isPublished ?? true,
       modules: course.modules?.length ? course.modules.map((m) => ({ title: m.title, durationMinutes: m.durationMinutes, type: m.type })) : [{ title: '', durationMinutes: 20, type: 'reading' }],
     });
+  };
+
+  const handleThumbnailChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (event) => setThumbnailPreview(event.target.result);
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    try {
+      setIsUploadingThumbnail(true);
+      const response = await adminService.uploadCourseThumbnail(file);
+      setForm((prev) => ({ ...prev, thumbnail: response.data?.thumbnail || '' }));
+      toast('Thumbnail uploaded successfully');
+    } catch (err) {
+      setThumbnailPreview(null);
+      toast(err?.response?.data?.message || 'Failed to upload thumbnail', 'error');
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
   };
 
   const submit = async (e) => {
@@ -103,7 +138,33 @@ export default function ManageCoursesPage() {
                 {categories.map((category) => <option key={category._id} value={category._id}>{category.name}</option>)}
               </select>
             </div>
-            <Input label="Thumbnail URL" value={form.thumbnail} onChange={(e) => setForm({ ...form, thumbnail: e.target.value })} />
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Course Thumbnail</label>
+              {thumbnailPreview && (
+                <div className="mb-3 rounded-xl overflow-hidden border border-slate-200">
+                  <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-48 object-cover" />
+                </div>
+              )}
+              <div 
+                className="flex items-center justify-center w-full px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition"
+                onClick={() => document.getElementById('thumbnail-input').click()}
+              >
+                <input
+                  id="thumbnail-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleThumbnailChange}
+                  disabled={isUploadingThumbnail}
+                  className="hidden"
+                />
+                <div className="text-center">
+                  <div className="text-sm text-slate-600">
+                    {isUploadingThumbnail ? 'Uploading...' : 'Click to upload or drag and drop'}
+                  </div>
+                  <div className="text-xs text-slate-500">PNG, JPG, GIF, WEBP up to 5MB</div>
+                </div>
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Level</label>
@@ -152,6 +213,9 @@ export default function ManageCoursesPage() {
             <Card key={course._id}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
+                  {course.thumbnail && (
+                    <img src={getThumbnailUrl(course.thumbnail)} alt={course.title} className="mb-4 h-32 w-full rounded-xl object-cover" />
+                  )}
                   <div className="flex items-center gap-2">
                     <div className="text-xs font-medium uppercase tracking-wide text-indigo-600">{course.category?.name}</div>
                     {course.isPublished ? (

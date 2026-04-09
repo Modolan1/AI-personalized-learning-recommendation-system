@@ -14,6 +14,8 @@ const userSchema = new mongoose.Schema({
   weeklyLearningGoalHours: { type: Number, default: 5 },
   recommendationOptIn: { type: Boolean, default: true },
   status: { type: String, enum: ['pending', 'active', 'inactive'], default: 'active' },
+  failedLoginAttempts: { type: Number, default: 0 },
+  lockUntil: { type: Date, default: null },
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

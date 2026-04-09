@@ -20,6 +20,13 @@ export const adminService = {
   createCourse: async (payload) => (await API.post('/admin/courses', payload)).data,
   updateCourse: async (id, payload) => (await API.put(`/admin/courses/${id}`, payload)).data,
   deleteCourse: async (id) => (await API.delete(`/admin/courses/${id}`)).data,
+  uploadCourseThumbnail: async (file) => {
+    const formData = new FormData();
+    formData.append('thumbnail', file);
+    return (await API.post('/admin/courses/upload/thumbnail', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })).data;
+  },
   getQuizzes: async () => (await API.get('/admin/quizzes')).data,
   createQuiz: async (payload) => (await API.post('/admin/quizzes', payload)).data,
   updateQuiz: async (id, payload) => (await API.put(`/admin/quizzes/${id}`, payload)).data,

@@ -6,6 +6,8 @@ import { mkdirSync } from 'fs';
 import { protect } from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
 import { validateObjectId } from '../middleware/validateObjectId.js';
+import { validate } from '../middleware/validate.js';
+import { updateProfileSchema, createContentSchema, updateContentSchema } from '../schemas/instructorSchemas.js';
 import {
   getDashboard, getProfile, updateProfile, getContent, getCategories,
   createContent, updateContent, deleteContent,
@@ -47,14 +49,14 @@ router.use(protect, authorizeRoles('instructor'));
 
 router.get('/dashboard', getDashboard);
 router.get('/profile', getProfile);
-router.put('/profile', updateProfile);
+router.put('/profile', validate(updateProfileSchema), updateProfile);
 router.get('/content', getContent);
 router.get('/content/:id', validateObjectId, getContentById);
 router.get('/categories', getCategories);
 router.get('/my-courses', getMyCourses);
 router.get('/students-enrolled', getStudentsEnrolled);
-router.post('/content', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]), createContent);
-router.put('/content/:id', validateObjectId, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]), updateContent);
+router.post('/content', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]), validate(createContentSchema), createContent);
+router.put('/content/:id', validateObjectId, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'videoFile', maxCount: 1 }]), validate(updateContentSchema), updateContent);
 router.delete('/content/:id', validateObjectId, deleteContent);
 router.post('/content/:id/view', validateObjectId, trackView);
 

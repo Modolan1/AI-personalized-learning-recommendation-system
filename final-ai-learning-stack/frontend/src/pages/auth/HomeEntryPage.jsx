@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
+import { BrainCircuit } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../services/authService';
+
+const apiOrigin = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/api\/?$/, '');
+
+function getThumbnailUrl(thumbnail) {
+  if (!thumbnail) return '';
+  if (/^https?:\/\//i.test(thumbnail)) return thumbnail;
+  return `${apiOrigin}${thumbnail.startsWith('/') ? thumbnail : `/${thumbnail}`}`;
+}
 
 const PASSWORD_MIN = 8;
 const PASSWORD_MAX = 128;
@@ -288,7 +297,12 @@ export default function HomeEntryPage() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#dbeafe,_#f8fafc_45%,_#e2e8f0)] text-slate-900">
       <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <button type="button" onClick={() => handleSectionNav('home')} className="text-xl font-bold tracking-tight text-indigo-700">LearnWithAI</button>
+          <button type="button" onClick={() => handleSectionNav('home')} className="inline-flex items-center gap-2 text-xl font-bold tracking-tight text-indigo-700">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-400 text-slate-900 shadow-sm">
+              <BrainCircuit size={18} />
+            </span>
+            <span>LearnWithAI</span>
+          </button>
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
             <button type="button" onClick={() => handleSectionNav('courses')} className={`transition hover:text-indigo-700 ${activeSection === 'courses' ? 'text-indigo-700' : ''}`}>Enroll for Courses</button>
             <button type="button" onClick={() => handleSectionNav('about')} className={`transition hover:text-indigo-700 ${activeSection === 'about' ? 'text-indigo-700' : ''}`}>About</button>
@@ -379,15 +393,22 @@ export default function HomeEntryPage() {
               <p className="col-span-full text-center text-slate-500">No courses available yet.</p>
             ) : (
               courses.map((course) => (
-                <button
+                <div
                   key={course._id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleSelectCourseForEnrollment(course)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleSelectCourseForEnrollment(course);
+                    }
+                  }}
                   className="group text-left transition hover:scale-105"
                 >
                   <div className="rounded-2xl bg-white p-5 shadow-md transition group-hover:shadow-xl">
                     {course.thumbnail && (
-                      <img src={course.thumbnail} alt={course.title} className="h-40 w-full rounded-lg object-cover" />
+                      <img src={getThumbnailUrl(course.thumbnail)} alt={course.title} className="h-40 w-full rounded-lg object-cover" />
                     )}
                     <h3 className="mt-4 font-semibold text-slate-900 group-hover:text-indigo-700">{course.title}</h3>
                     <p className="mb-3 mt-2 text-xs text-slate-500">{course.category?.name}</p>
@@ -400,7 +421,7 @@ export default function HomeEntryPage() {
                     </div>
                     <Button className="mt-4 w-full">Enroll Now</Button>
                   </div>
-                </button>
+                </div>
               ))
             )}
           </div>

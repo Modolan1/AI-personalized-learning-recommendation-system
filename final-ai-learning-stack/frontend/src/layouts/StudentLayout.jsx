@@ -6,6 +6,7 @@ const navItems = [
   { path: '/student/courses', label: 'Courses' },
   { path: '/student/flashcards', label: 'Flashcards' },
   { path: '/student/quizzes', label: 'Quizzes' },
+  { path: '/student/updates', label: 'Updates' },
   { path: '/student/profile', label: 'Profile' },
 ];
 export default function StudentLayout({ children }) {

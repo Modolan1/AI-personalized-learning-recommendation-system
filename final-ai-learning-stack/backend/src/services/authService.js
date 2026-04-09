@@ -5,6 +5,9 @@ import { generateToken } from '../utils/generateToken.js';
 import { hashPassword, verifyPassword } from '../utils/hashPassword.js';
 import { validatePassword } from '../utils/validatePassword.js';
 
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 30 * 60 * 1000;
+
 export const authService = {
   listPublishedCourses: () => courseRepository.findAllPublished(),
 
@@ -61,10 +64,58 @@ export const authService = {
 
   async login(email, password) {
     const user = await userRepository.findByEmail(String(email));
-    if (!user) throw new Error('Invalid email or password');
+    if (!user) {
+      const invalidError = new Error('Invalid email or password');
+      invalidError.statusCode = 401;
+      throw invalidError;
+    }
+
+    const now = Date.now();
+    if (user.lockUntil && new Date(user.lockUntil).getTime() > now) {
+      const lockError = new Error('Too many failed login attempts. Try again after 30 minutes.');
+      lockError.statusCode = 429;
+      throw lockError;
+    }
+
+    if (user.lockUntil && new Date(user.lockUntil).getTime() <= now) {
+      await userRepository.updateById(user._id, { failedLoginAttempts: 0, lockUntil: null });
+      user.failedLoginAttempts = 0;
+      user.lockUntil = null;
+    }
 
     const valid = await verifyPassword(String(password), user.passwordHash);
-    if (!valid) throw new Error('Invalid email or password');
+    if (!valid) {
+      const failedAttempts = (Number(user.failedLoginAttempts) || 0) + 1;
+
+      if (failedAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+        await userRepository.updateById(user._id, {
+          failedLoginAttempts: 0,
+          lockUntil: new Date(now + LOGIN_LOCKOUT_MS),
+        });
+
+        const lockError = new Error('Too many failed login attempts. Try again after 30 minutes.');
+        lockError.statusCode = 429;
+        throw lockError;
+      }
+
+      await userRepository.updateById(user._id, {
+        failedLoginAttempts: failedAttempts,
+        lockUntil: null,
+      });
+
+      const remainingAttempts = MAX_FAILED_LOGIN_ATTEMPTS - failedAttempts;
+      const invalidError = new Error(
+        failedAttempts >= 2 && failedAttempts <= 4
+          ? `Invalid email or password. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining before temporary lock.`
+          : 'Invalid email or password'
+      );
+      invalidError.statusCode = 401;
+      throw invalidError;
+    }
+
+    if ((Number(user.failedLoginAttempts) || 0) > 0 || user.lockUntil) {
+      await userRepository.updateById(user._id, { failedLoginAttempts: 0, lockUntil: null });
+    }
 
     if (user.role === 'instructor' && user.status !== 'active') {
       const pendingError = new Error('Instructor account is pending admin approval. Please wait for approval.');

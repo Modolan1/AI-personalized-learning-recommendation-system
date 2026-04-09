@@ -15,7 +15,8 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const nextValue = value.slice(0, 128);
+    setFormData(prev => ({ ...prev, [name]: nextValue }));
   };
 
   const validateForm = () => {
@@ -102,6 +103,8 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
               name="oldPassword"
               value={formData.oldPassword}
               onChange={handleInputChange}
+              minLength={8}
+              maxLength={128}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="••••••••"
             />
@@ -116,6 +119,8 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
               name="newPassword"
               value={formData.newPassword}
               onChange={handleInputChange}
+              minLength={8}
+              maxLength={128}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="••••••••"
             />
@@ -130,6 +135,8 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleInputChange}
+              minLength={8}
+              maxLength={128}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="••••••••"
             />

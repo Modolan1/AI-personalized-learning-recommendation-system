@@ -118,3 +118,11 @@ export const deleteFlashcard = asyncHandler(async (req, res) => {
   await adminService.deleteFlashcard(req.params.id);
   res.json({ success: true, message: 'Flashcard deleted' });
 });
+
+export const uploadCourseThumbnail = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+  const fileUrl = `/uploads/course-thumbnails/${req.file.filename}`;
+  res.json({ success: true, data: { thumbnail: fileUrl, filename: req.file.filename } });
+});

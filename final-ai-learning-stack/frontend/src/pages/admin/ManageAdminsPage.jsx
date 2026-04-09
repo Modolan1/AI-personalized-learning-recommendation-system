@@ -40,12 +40,33 @@ export default function ManageAdminsPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let nextValue = value;
+
+    if (name === 'firstName' || name === 'lastName') {
+      nextValue = value.replace(/[^A-Za-z\s]/g, '').replace(/\s{2,}/g, ' ').slice(0, 50);
+    }
+    if (name === 'email') {
+      nextValue = value.trim().slice(0, 120);
+    }
+    if (name === 'password' || name === 'confirmPassword') {
+      nextValue = value.slice(0, 128);
+    }
+
+    setFormData(prev => ({ ...prev, [name]: nextValue }));
   };
 
   const validateForm = () => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       addToast('First name and last name are required', 'error');
+      return false;
+    }
+    const nameRegex = /^[A-Za-z ]+$/;
+    if (!nameRegex.test(formData.firstName.trim()) || !nameRegex.test(formData.lastName.trim())) {
+      addToast('Names must contain letters and spaces only', 'error');
+      return false;
+    }
+    if (formData.firstName.trim().length < 2 || formData.firstName.trim().length > 50 || formData.lastName.trim().length < 2 || formData.lastName.trim().length > 50) {
+      addToast('First and last name must be between 2 and 50 characters', 'error');
       return false;
     }
     if (!formData.email.trim()) {
@@ -144,6 +165,10 @@ export default function ManageAdminsPage() {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
+                  minLength={2}
+                  maxLength={50}
+                  pattern="^[A-Za-z ]+$"
+                  title="Use letters and spaces only."
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   placeholder="John"
                 />
@@ -157,6 +182,10 @@ export default function ManageAdminsPage() {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
+                  minLength={2}
+                  maxLength={50}
+                  pattern="^[A-Za-z ]+$"
+                  title="Use letters and spaces only."
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   placeholder="Doe"
                 />
@@ -171,6 +200,8 @@ export default function ManageAdminsPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                minLength={5}
+                maxLength={120}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="admin@example.com"
               />
@@ -185,6 +216,8 @@ export default function ManageAdminsPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
+                  minLength={8}
+                  maxLength={128}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   placeholder="••••••••"
                 />
@@ -198,6 +231,8 @@ export default function ManageAdminsPage() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
+                  minLength={8}
+                  maxLength={128}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   placeholder="••••••••"
                 />

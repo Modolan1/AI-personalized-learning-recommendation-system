@@ -13,6 +13,7 @@ import { authService } from './services/authService.js';
 import { sanitizeRequest } from './middleware/sanitizeMiddleware.js';
 import { notFound } from './middleware/notFoundMiddleware.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
+import { globalLimiter, authLimiter, aiLimiter, uploadLimiter } from './middleware/rateLimitMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,6 +35,17 @@ app.use(cors({
 app.use(express.json());
 app.use(sanitizeRequest);
 app.use(morgan('dev'));
+
+// ── Rate limiting ──────────────────────────────────────────────────────────────
+// Broad global cap — covers all /api/* traffic
+app.use('/api/', globalLimiter);
+// Tighter caps for sensitive / expensive sub-paths
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/update-password', authLimiter);
+app.use('/api/student/recommendations/refresh', aiLimiter);
+app.use('/api/student/documents/analyze', uploadLimiter);
+app.use('/api/student/documents', aiLimiter);          // chat + quiz endpoints
 
 app.use('/uploads', express.static(uploadsDir));
 app.get('/', (req, res) => res.json({ success: true, message: 'AI Learning API running' }));

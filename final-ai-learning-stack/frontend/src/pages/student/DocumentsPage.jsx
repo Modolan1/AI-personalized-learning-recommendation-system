@@ -61,6 +61,8 @@ export default function DocumentsPage() {
   const [quizAnswers, setQuizAnswers] = useState([]);
   const [docQuizQuestionIndex, setDocQuizQuestionIndex] = useState(0);
   const [quizResult, setQuizResult] = useState(null);
+  const [docFlashcardIndex, setDocFlashcardIndex] = useState(0);
+  const [isDocFlashcardFlipped, setIsDocFlashcardFlipped] = useState(false);
 
   const loadHistory = async (searchTerm = search) => {
     setIsLoadingList(true);
@@ -96,6 +98,8 @@ export default function DocumentsPage() {
       setSelectedDoc(doc);
       setQuizAnswers(new Array(doc.quiz?.questions?.length || 0).fill(''));
       setDocQuizQuestionIndex(0);
+      setDocFlashcardIndex(0);
+      setIsDocFlashcardFlipped(false);
       setQuizResult(null);
     } catch (requestError) {
       setError(requestError?.response?.data?.message || 'Unable to load document details.');
@@ -268,6 +272,8 @@ export default function DocumentsPage() {
               value={chatQuestion}
               onChange={(event) => setChatQuestion(event.target.value)}
               placeholder="Ask anything about this document..."
+              minLength={2}
+              maxLength={1000}
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
             />
             <Button onClick={handleAskQuestion} disabled={isAskingChat || !chatQuestion.trim()}>
@@ -304,17 +310,100 @@ export default function DocumentsPage() {
     }
 
     if (activeTab === 'flashcards') {
+      const flashcards = Array.isArray(selectedDoc.flashcards) ? selectedDoc.flashcards : [];
+      const totalFlashcards = flashcards.length;
+      const clampedIndex = Math.min(docFlashcardIndex, Math.max(0, totalFlashcards - 1));
+      const currentCard = flashcards[clampedIndex];
+      const flashcardProgress = totalFlashcards ? Math.round(((clampedIndex + 1) / totalFlashcards) * 100) : 0;
+
       return (
         <div className="rounded-xl border p-4">
-          <p className="text-sm text-slate-500">AI-Generated Flashcards</p>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {selectedDoc.flashcards?.map((card, index) => (
-              <div key={`${card.question}-${index}`} className="rounded-lg border p-3">
-                <p className="text-sm font-medium text-slate-800">Q: {card.question}</p>
-                <p className="mt-1 text-sm text-slate-600">A: {card.answer}</p>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-slate-500">AI-Generated Flashcards</p>
+            {!!totalFlashcards && (
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                Card {clampedIndex + 1} of {totalFlashcards}
+              </span>
+            )}
           </div>
+
+          {!totalFlashcards && (
+            <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+              No flashcards generated for this document yet.
+            </div>
+          )}
+
+          {!!totalFlashcards && (
+            <>
+              <div className="mt-3">
+                <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+                  <span>Study Progress</span>
+                  <span>{flashcardProgress}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-100">
+                  <div className="h-2 rounded-full bg-indigo-600 transition-all" style={{ width: `${flashcardProgress}%` }} />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsDocFlashcardFlipped((prev) => !prev)}
+                className="mt-4 w-full rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-indigo-50 to-cyan-50 p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                    {isDocFlashcardFlipped ? 'Answer' : 'Question'}
+                  </span>
+                  <span className="text-xs text-slate-500">Click card to {isDocFlashcardFlipped ? 'show question' : 'reveal answer'}</span>
+                </div>
+
+                <p className="text-base leading-relaxed text-slate-800 md:text-lg">
+                  {isDocFlashcardFlipped ? currentCard?.answer : currentCard?.question}
+                </p>
+              </button>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  variant="secondary"
+                  disabled={clampedIndex === 0}
+                  onClick={() => {
+                    setDocFlashcardIndex((prev) => Math.max(0, prev - 1));
+                    setIsDocFlashcardFlipped(false);
+                  }}
+                >
+                  Previous
+                </Button>
+                <Button variant="secondary" onClick={() => setIsDocFlashcardFlipped((prev) => !prev)}>
+                  {isDocFlashcardFlipped ? 'Show Question' : 'Reveal Answer'}
+                </Button>
+                <Button
+                  disabled={clampedIndex >= totalFlashcards - 1}
+                  onClick={() => {
+                    setDocFlashcardIndex((prev) => Math.min(totalFlashcards - 1, prev + 1));
+                    setIsDocFlashcardFlipped(false);
+                  }}
+                >
+                  Next
+                </Button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {flashcards.map((_, index) => (
+                  <button
+                    key={`flashcard-jump-${index}`}
+                    type="button"
+                    onClick={() => {
+                      setDocFlashcardIndex(index);
+                      setIsDocFlashcardFlipped(false);
+                    }}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${index === clampedIndex ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       );
     }
@@ -443,6 +532,8 @@ export default function DocumentsPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by filename or topic"
+              minLength={1}
+              maxLength={100}
               className="mb-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
             />
             <Button variant="secondary" className="mb-3 w-full" onClick={() => loadHistory(search)}>Search</Button>
