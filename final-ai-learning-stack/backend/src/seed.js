@@ -18,18 +18,18 @@ await Promise.all([
   InstructorContent.deleteMany({})
 ]);
 
-const passwordHash = await hashPassword('password123');
+const passwordHash = await hashPassword('');
 const [admin, student, instructor] = await User.create([
   {
-    firstName: 'Admin', lastName: 'User', email: 'admin@example.com', passwordHash, role: 'admin',
+    firstName: 'Admin', lastName: 'User', email: '', passwordHash, role: 'admin',
     preferredSubject: 'Web Development', preferredLearningStyle: 'Visual', skillLevel: 'Advanced'
   },
   {
-    firstName: 'Student', lastName: 'User', email: 'student@example.com', passwordHash, role: 'student',
+    firstName: 'Student', lastName: 'User', email: '', passwordHash, role: 'student',
     preferredSubject: 'Web Development', preferredLearningStyle: 'Visual', skillLevel: 'Beginner', learningGoal: 'Become a full-stack developer'
   },
   {
-    firstName: 'Instructor', lastName: 'User', email: 'instructor@example.com', passwordHash, role: 'instructor',
+    firstName: 'Instructor', lastName: 'User', email: '', passwordHash, role: 'instructor',
     preferredSubject: 'Web Development', preferredLearningStyle: 'Project-based', skillLevel: 'Advanced'
   },
 ]);
