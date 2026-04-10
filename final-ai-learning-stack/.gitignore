@@ -2,6 +2,7 @@
 node_modules/
 backend/node_modules/
 frontend/node_modules/
+frontend/.env
 
 # Build artifacts
 dist/
@@ -16,6 +17,9 @@ backend/dist/
 !.env.example
 backend/.env
 frontend/.env
+.env.example
+backend/.env.example
+frontend/.env.example
 
 # Logs
 logs/

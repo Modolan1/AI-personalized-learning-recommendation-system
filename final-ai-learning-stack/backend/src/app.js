@@ -49,6 +49,9 @@ app.use('/api/student/documents', aiLimiter);          // chat + quiz endpoints
 
 app.use('/uploads', express.static(uploadsDir));
 app.get('/', (req, res) => res.json({ success: true, message: 'AI Learning API running' }));
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ message: 'Backend is healthy' });
+});
 app.get('/api/public/courses', async (_req, res, next) => {
 	try {
 		res.json({ success: true, data: await authService.listPublishedCourses() });
